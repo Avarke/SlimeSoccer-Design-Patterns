@@ -90,6 +90,11 @@ public class SlimeSoccer
 		team1ScoreText = new Text("" + player1Score, 0.026*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
 		team2ScoreText = new Text("" + player2Score, 0.885*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
 		gamestate = 1;
+
+		/*
+		Ball normal = BallFactory.createBall(BallType.NORMAL, 300, 100);
+		Ball heavy = BallFactory.createBall(BallType.HEAVY, 350, 100);
+		*/
 	}
 
 	public void draw(Graphics g) {
