@@ -71,14 +71,20 @@ public class SlimeSoccer
 	}
 
 	public void init() {
-		player1 = new Slime(Window.WIDTH/2 - (2*Window.WIDTH/5), 0.814*Window.HEIGHT, Color.GREEN, true);
-		player2 = new Slime(Window.WIDTH/2 - (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.CYAN, true);
-		player3 = new Slime(Window.WIDTH/2 + (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.RED, false);
-		player4 = new Slime(Window.WIDTH/2 + (2*Window.WIDTH/5), 0.814*Window.HEIGHT, new Color(255, 110, 20), false);
+		IGameFactory factory = DefaultGameFactory.INSTANCE;
+		player1 = factory.createSlime(Window.WIDTH/2 - (2*Window.WIDTH/5), 0.814*Window.HEIGHT, Color.GREEN, true);
+		player2 = factory.createSlime(Window.WIDTH/2 - (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.CYAN, true);
+		player3 = factory.createSlime(Window.WIDTH/2 + (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.RED, false);
+		player4 = factory.createSlime(Window.WIDTH/2 + (2*Window.WIDTH/5), 0.814*Window.HEIGHT, new Color(255, 110, 20), false);
 		background =  new Rectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
 		floor = new Rectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
-		ball = new Ball(Window.WIDTH/2, 0.278*Window.HEIGHT, 20, Color.YELLOW);
-		ballArrow = new Ball(Window.WIDTH/2, 0.046*Window.HEIGHT, 20, Color.GRAY);
+
+		ball = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.278*Window.HEIGHT);
+		ball.setRadius(20);
+
+		ballArrow = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.046*Window.HEIGHT);
+		ballArrow.setRadius(20);
+
 		leftGoal = new Goal(0, 0.667*Window.HEIGHT, true);
 		rightGoal = new Goal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
 		leftGoalFoulZone = new Rectangle(0, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);

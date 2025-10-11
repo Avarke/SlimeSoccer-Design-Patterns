@@ -29,18 +29,30 @@ public class ClientWindow extends JFrame
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT -> gameData.setRightPressed(true);
-                    case KeyEvent.VK_LEFT  -> gameData.setLeftPressed(true);
-                    case KeyEvent.VK_UP    -> gameData.setUpPressed(true);
+                    case KeyEvent.VK_RIGHT:
+                        gameData.setRightPressed(true);
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        gameData.setLeftPressed(true);
+                        break;
+                    case KeyEvent.VK_UP:
+                        gameData.setUpPressed(true);
+                        break;
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT -> gameData.setRightPressed(false);
-                    case KeyEvent.VK_LEFT  -> gameData.setLeftPressed(false);
-                    case KeyEvent.VK_UP    -> gameData.setUpPressed(false);
+                    case KeyEvent.VK_RIGHT:
+                        gameData.setRightPressed(false);
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        gameData.setLeftPressed(false);
+                        break;
+                    case KeyEvent.VK_UP:
+                        gameData.setUpPressed(false);
+                        break;
                 }
             }
 
