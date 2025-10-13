@@ -1,6 +1,7 @@
 package client;
 
 import java.awt.Color;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameData
 {
@@ -33,6 +34,8 @@ public class GameData
 
     private int ballEffectCode;
 
+    private final CopyOnWriteArrayList<GameObserver> observers = new CopyOnWriteArrayList<>();
+
 
     private GameData(){}
 
@@ -42,6 +45,20 @@ public class GameData
         }
         return instance;
     }
+
+    // Observer
+    public void addObserver(GameObserver o) {
+        if (o != null) observers.addIfAbsent(o);
+    }
+    public void removeObserver(GameObserver o) {
+        observers.remove(o);
+    }
+    public void notifyObservers() {
+        for (GameObserver o : observers) {
+            o.onGameDataChanged(this);
+        }
+    }
+
 
     // --- Player positions ---
     public synchronized float getP1PosX() { return p1PosX; }

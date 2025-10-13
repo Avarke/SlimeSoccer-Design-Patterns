@@ -7,8 +7,8 @@ import javax.swing.JFrame;
 
 public class ClientWindow extends JFrame
 {
-	SlimeSoccer slimesoccerclient;
-	ClientPanel panel;
+    SlimeSoccer slimesoccerclient;
+    ClientPanel panel;
 
     ClientWindow(SlimeSoccer temp) {
         this.slimesoccerclient = temp;
@@ -24,6 +24,9 @@ public class ClientWindow extends JFrame
 
         // Use GameData singleton
         GameData gameData = GameData.getInstance();
+
+        // Register observer
+        gameData.addObserver(panel);
 
         panel.addKeyListener(new KeyListener() {
             @Override
@@ -57,13 +60,10 @@ public class ClientWindow extends JFrame
             }
 
             @Override
-            public void keyTyped(KeyEvent e) {
-                // not used
-            }
+            public void keyTyped(KeyEvent e) { }
         });
 
         pack();
         setVisible(true);
     }
-
 }

@@ -71,13 +71,12 @@ public class GameInfoReceiverRunnable implements Runnable
                 gameData.setPlayer1Score(Integer.parseInt(s.next()));
                 gameData.setPlayer2Score(Integer.parseInt(s.next()));
 
-                int effect = 0;
-                if (s.hasNext()) {
-                    try { effect = Integer.parseInt(s.next()); } catch (Exception ignore) {}
-                }
-                gameData.setBallEffectCode(effect);
+                if (s.hasNext()) { s.next(); }
 
                 s.close();
+
+                // Notify all observers once per received frame (after all fields set)
+                gameData.notifyObservers();
             } catch (IOException e) {
                 e.printStackTrace();
             }

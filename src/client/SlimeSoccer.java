@@ -22,48 +22,46 @@ public class SlimeSoccer
 	int port = 6969;
 	Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
 	Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
-	
-	
-	public SlimeSoccer()
-	{		
-		hostName = JOptionPane.showInputDialog("Enter hostname");
-		window = new ClientWindow(this);
-		
-		try 
-		{
-			socket = new Socket(hostName, port);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		new Thread(new GameInfoReceiverRunnable(socket)).start();
-		try {
-			os = new PrintStream(socket.getOutputStream());
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+
+
+    public SlimeSoccer()
+    {
+        hostName = JOptionPane.showInputDialog("Enter hostname");
+        window = new ClientWindow(this);
+
+        try {
+            socket = new Socket(hostName, port);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        new Thread(new GameInfoReceiverRunnable(socket)).start();
+        try {
+            os = new PrintStream(socket.getOutputStream());
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
 
         GameData gameData = GameData.getInstance();
 
         while(true)
-		{
-			try 
-			{
-				Thread.sleep(16);
-			} catch (InterruptedException e)
-			{
-				e.printStackTrace();
-			}
-			window.repaint();
+        {
+            try {
+                Thread.sleep(16);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            // Observer will trigger repaint on incoming data; we only send inputs here
             os.println(
                     gameData.isUpPressed() + " " +
                             gameData.isLeftPressed() + " " +
                             gameData.isRightPressed()
-            );		}
-	}
+            );
+        }
+    }
 
     public void draw(Graphics g)
     {
