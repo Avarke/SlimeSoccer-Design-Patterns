@@ -7,9 +7,9 @@ Factory for creating Slime instances.
 */
 public class SlimeFactory {
 
-	private SlimeFactory() {}
+    private SlimeFactory() {}
 
-	public static Slime createSlime(double x, double y, Color color, boolean isLeft) {
-		return new Slime(x, y, color, isLeft);
-	}
+    public static Slime createSlime(double x, double y, Color color, boolean isLeft) {
+        return new Slime(x, y, color, isLeft);
+    }
 }

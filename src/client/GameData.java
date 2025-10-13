@@ -31,6 +31,9 @@ public class GameData
 	private boolean rightIsPressed;
 	private boolean leftIsPressed;
 
+    private int ballEffectCode;
+
+
     private GameData(){}
 
     public static synchronized GameData getInstance(){
@@ -71,6 +74,9 @@ public class GameData
 
     public synchronized float getBallPosY() { return ballPosY; }
     public synchronized void setBallPosY(float ballPosY) { this.ballPosY = ballPosY; }
+
+    public synchronized int getBallEffectCode() { return ballEffectCode; }
+    public synchronized void setBallEffectCode(int ballEffectCode) { this.ballEffectCode = ballEffectCode; }
 
     // --- Foul bars ---
     public synchronized float getP1FoulBarWidth() { return p1FoulBarWidth; }

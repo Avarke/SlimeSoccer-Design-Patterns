@@ -31,10 +31,10 @@ public class GameInfoReceiverRunnable implements Runnable
 		}
 
         GameData gameData = GameData.getInstance();
-		while(true)
-		{
-			try
-			{
+        while(true)
+        {
+            try
+            {
                 Scanner s = new Scanner(is.readLine());
 
                 gameData.setP1PosX(Float.parseFloat(s.next()));
@@ -71,10 +71,16 @@ public class GameInfoReceiverRunnable implements Runnable
                 gameData.setPlayer1Score(Integer.parseInt(s.next()));
                 gameData.setPlayer2Score(Integer.parseInt(s.next()));
 
-                s.close(); // cleanup scanner
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+                int effect = 0;
+                if (s.hasNext()) {
+                    try { effect = Integer.parseInt(s.next()); } catch (Exception ignore) {}
+                }
+                gameData.setBallEffectCode(effect);
+
+                s.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 	}
 }

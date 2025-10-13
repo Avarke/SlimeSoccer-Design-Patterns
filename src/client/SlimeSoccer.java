@@ -64,30 +64,40 @@ public class SlimeSoccer
                             gameData.isRightPressed()
             );		}
 	}
-	
-	public void draw(Graphics g)
-	{
 
+    public void draw(Graphics g)
+    {
         GameData gameData = GameData.getInstance();
 
         g.setColor(Color.BLUE);
-		g.fillRect(0, 0, 1920, 1080);
-		
-		g.setColor(Color.GRAY);
-		g.fillRect(0, 900, 1920, 280);
+        g.fillRect(0, 0, 1920, 1080);
+
+        g.setColor(Color.GRAY);
+        g.fillRect(0, 900, 1920, 280);
 
         drawSlime(g, 1, 75);
         drawSlime(g, 2, 75);
         drawSlime(g, 3, 75);
         drawSlime(g, 4, 75);
 
-
-		g.setColor(Color.YELLOW);
+        // Ball color by current effect
+        int eff = gameData.getBallEffectCode();
+        Color ballColor;
+        switch (eff) {
+            case 1: ballColor = new Color(135,206,250); break; // low-gravity (light blue)
+            case 2: ballColor = new Color(80,80,80);    break; // heavy (dark gray)
+            case 3: ballColor = new Color(255,105,180); break; // reverse (pink)
+            default: ballColor = Color.YELLOW;                 // normal
+        }
+        g.setColor(ballColor);
         g.fillOval((int) (gameData.getBallPosX() - 20), (int) (gameData.getBallPosY() - 20), 40, 40);
 
-        int radius = (int) -(gameData.getBallPosY()) / 50;
-		g.setColor(Color.GRAY);
-        g.fillOval((int) gameData.getBallPosX() - radius, 50, radius * 2, radius * 2);
+        // Safe halo (clamped)
+        int radius = Math.max(0, Math.min(200, (int) ((900 - gameData.getBallPosY()) / 50)));
+        g.setColor(Color.GRAY);
+        if (radius > 0) {
+            g.fillOval((int) gameData.getBallPosX() - radius, 50, radius * 2, radius * 2);
+        }
 
         drawGoal(g, 0, 720, true);
         drawGoal(g, 1828, 720, false);
@@ -111,7 +121,7 @@ public class SlimeSoccer
             g.setFont(goalFont);
             g.drawString("FOUL!", 550, 300);
         }
-	}
+    }
 
     public void drawSlime(Graphics g, int playerIndex, int radius) {
         GameData gameData = GameData.getInstance();

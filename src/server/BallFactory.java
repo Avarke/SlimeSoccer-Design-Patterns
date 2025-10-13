@@ -2,7 +2,6 @@ package server;
 
 import java.awt.Color;
 
-
 public final class BallFactory {
 
     private BallFactory() { }
@@ -25,7 +24,7 @@ public final class BallFactory {
         }
     }
 
-    // Default 
+    // Default
     private static class NormalFactory implements IBallFactory {
         static final NormalFactory INSTANCE = new NormalFactory();
         @Override public Ball create(double x, double y) {

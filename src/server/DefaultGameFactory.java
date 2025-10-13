@@ -2,7 +2,6 @@ package server;
 
 import java.awt.Color;
 
-
 public class DefaultGameFactory implements IGameFactory {
 
     public static final DefaultGameFactory INSTANCE = new DefaultGameFactory();
