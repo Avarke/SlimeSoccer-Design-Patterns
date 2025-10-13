@@ -77,20 +77,43 @@ public class Ball
 			}
 		}
 	}
-	
+
 	public void reset(double x, double y) {
 		this.x = x;
 		this.y = y;
 	}
 	
 	public double getX() { return x; }
-	public void setX(double x) { this.x = x; }
 	public double getY() { return y; }
-	public void setY(double y) { this.y = y; }
 	public double getRadius() { return radius; }
-	public void setRadius(int radius) { this.radius = radius; }
 	public double getVelX() { return velX; }
-	public void setVelX(double velX) { this.velX = velX; }
 	public double getVelY() { return velY; }
+	public Color getColor() { return color; }
+
+	// setters required by the rest of the codebase
+	public void setX(double x) { this.x = x; }
+	public void setY(double y) { this.y = y; }
+	public void setRadius(int radius) { this.radius = radius; }
+	public void setVelX(double velX) { this.velX = velX; }
 	public void setVelY(double velY) { this.velY = velY; }
+
+	public static class Builder {
+		private double x, y, radius = 10;
+		private Color color = Color.WHITE;
+		private double velX = 0, velY = 0;
+
+		public Builder setX(double x) { this.x = x; return this; }
+		public Builder setY(double y) { this.y = y; return this; }
+		public Builder setRadius(double radius) { this.radius = radius; return this; }
+		public Builder setColor(Color color) { this.color = color; return this; }
+		public Builder setVelX(double velX) { this.velX = velX; return this; }
+		public Builder setVelY(double velY) { this.velY = velY; return this; }
+
+		public Ball build() {
+			Ball b = new Ball(x, y, radius, color);
+			b.setVelX(velX);
+			b.setVelY(velY);
+			return b;
+		}
+	}
 }

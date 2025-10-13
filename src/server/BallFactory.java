@@ -31,10 +31,14 @@ public final class BallFactory {
         @Override public Ball create(double x, double y) {
             double radius = 10;
             Color color = Color.WHITE;
-            Ball b = new Ball(x, y, radius, color);
-            b.setVelX(0);
-            b.setVelY(0);
-            return b;
+            return new Ball.Builder()
+                .setX(x)
+                .setY(y)
+                .setRadius(radius)
+                .setColor(color)
+                .setVelX(0)
+                .setVelY(0)
+                .build();
         }
     }
 
@@ -43,10 +47,14 @@ public final class BallFactory {
         @Override public Ball create(double x, double y) {
             double radius = 12;
             Color color = Color.DARK_GRAY;
-            Ball b = new Ball(x, y, radius, color);
-            b.setVelX(0);
-            b.setVelY(0);
-            return b;
+            return new Ball.Builder()
+                .setX(x)
+                .setY(y)
+                .setRadius(radius)
+                .setColor(color)
+                .setVelX(0)
+                .setVelY(0)
+                .build();
         }
     }
 
@@ -55,18 +63,26 @@ public final class BallFactory {
         @Override public Ball create(double x, double y) {
             double radius = 8;
             Color color = Color.LIGHT_GRAY;
-            Ball b = new Ball(x, y, radius, color);
-            return b;
+            return new Ball.Builder()
+                .setX(x)
+                .setY(y)
+                .setRadius(radius)
+                .setColor(color)
+                .build();
         }
     }
 
     private static class FastFactory implements IBallFactory {
         static final FastFactory INSTANCE = new FastFactory();
         @Override public Ball create(double x, double y) {
-            Ball b = NormalFactory.INSTANCE.create(x, y);
-            b.setVelX(5);
-            b.setVelY(-5);
-            return b;
+            return new Ball.Builder()
+                .setX(x)
+                .setY(y)
+                .setRadius(10)
+                .setColor(Color.WHITE)
+                .setVelX(5)
+                .setVelY(-5)
+                .build();
         }
     }
 
@@ -75,8 +91,12 @@ public final class BallFactory {
         @Override public Ball create(double x, double y) {
             double radius = 10;
             Color invisible = new Color(0,0,0,0);
-            Ball b = new Ball(x, y, radius, invisible);
-            return b;
+            return new Ball.Builder()
+                .setX(x)
+                .setY(y)
+                .setRadius(radius)
+                .setColor(invisible)
+                .build();
         }
     }
 }
