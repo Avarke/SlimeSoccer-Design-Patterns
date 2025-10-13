@@ -33,9 +33,11 @@ public class GameInfoReceiverRunnable implements Runnable
         GameData gameData = GameData.getInstance();
         while(true)
         {
-            try
-            {
-                Scanner s = new Scanner(is.readLine());
+            try {
+                String line = is.readLine();
+                if (line == null) break;
+
+                Scanner s = new Scanner(line);
 
                 gameData.setP1PosX(Float.parseFloat(s.next()));
                 gameData.setP1PosY(Float.parseFloat(s.next()));
@@ -71,11 +73,30 @@ public class GameInfoReceiverRunnable implements Runnable
                 gameData.setPlayer1Score(Integer.parseInt(s.next()));
                 gameData.setPlayer2Score(Integer.parseInt(s.next()));
 
-                if (s.hasNext()) { s.next(); }
+                boolean kick = false;
+                if (s.hasNextInt()) {
+                    kick = s.nextInt() == 1;
+                }
+                gameData.setBallKickedThisFrame(kick);
+
+                int puc = 0;
+                if (s.hasNextInt()) {
+                    puc = s.nextInt();
+                }
+                float[] xs = new float[Math.min(puc, 4)];
+                float[] ys = new float[Math.min(puc, 4)];
+                int[] types = new int[Math.min(puc, 4)];
+                int[] radii = new int[Math.min(puc, 4)];
+                for (int i = 0; i < xs.length; i++) {
+                    xs[i] = Float.parseFloat(s.next());
+                    ys[i] = Float.parseFloat(s.next());
+                    types[i] = Integer.parseInt(s.next());
+                    radii[i] = Integer.parseInt(s.next());
+                }
+                gameData.setPowerUps(puc, xs, ys, types, radii);
 
                 s.close();
 
-                // Notify all observers once per received frame (after all fields set)
                 gameData.notifyObservers();
             } catch (IOException e) {
                 e.printStackTrace();

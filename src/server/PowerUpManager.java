@@ -72,4 +72,8 @@ public class PowerUpManager {
         long durMs = 6000;
         items.add(new PowerUp(x, y, r, type, durMs));
     }
+
+    public java.util.List<PowerUp> getItemsSnapshot() {
+        return new java.util.ArrayList<>(items);
+    }
 }

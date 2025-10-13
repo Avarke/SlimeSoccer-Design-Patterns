@@ -10,6 +10,7 @@ public class PowerUp {
     private final long durationMs;
     private final Color color;
 
+
     public PowerUp(double x, double y, int radius, PowerUpType type, long durationMs) {
         this.x = x;
         this.y = y;
@@ -49,6 +50,11 @@ public class PowerUp {
             default: return new NormalPhysics();
         }
     }
+
+    public double getX() { return x; }
+    public double getY() { return y; }
+    public int getRadius() { return radius; }
+
 
     public PowerUpType getType() { return type; }
     public long getDurationMs() { return durationMs; }

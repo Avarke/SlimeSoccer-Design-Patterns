@@ -32,6 +32,8 @@ public class SlimeSoccer {
     static int player2Score = 0;
     private long autoResetAtMs = 0;
 
+    private boolean kickThisFrame = false;
+
     // Power-ups
     PowerUpManager powerUps;
 
@@ -100,8 +102,8 @@ public class SlimeSoccer {
     public void draw(Graphics g) {
         background.draw(g);
         floor.draw(g);
-        if(goalScored) goalScoredText.drawString(g);
-        if(foul) foulText.drawString(g);
+        if (goalScored) goalScoredText.drawString(g);
+        if (foul)       foulText.drawString(g);
 
         team1ScoreText.drawString(g);
         team2ScoreText.drawString(g);
@@ -116,6 +118,8 @@ public class SlimeSoccer {
         player4.draw(g, ball.getX(), ball.getY());
 
         powerUps.draw(g);
+        //ballArrow.draw(g);
+
         ball.draw(g);
 
         leftGoal.draw(g);
@@ -178,32 +182,37 @@ public class SlimeSoccer {
     }
 
     public void tick() {
-        // player movement & eye updates
+        // this-frame kick flag (cleared every tick)
+        kickThisFrame = false;
+
+        // Removed: ballArrow.setX(ball.getX());
+        // Removed: ballArrow.setRadius((int) -(ball.getY()) / 50);
+
         player1.setX(player1.getX() + player1.getVelX()); player1.updateEyes();
         player2.setX(player2.getX() + player2.getVelX()); player2.updateEyes();
         player3.setX(player3.getX() + player3.getVelX()); player3.updateEyes();
         player4.setX(player4.getX() + player4.getVelX()); player4.updateEyes();
 
-        // collisions with ball
-        Maths.bounceBallOffSlime(ball, player1);
-        Maths.bounceBallOffSlime(ball, player2);
-        Maths.bounceBallOffSlime(ball, player3);
-        Maths.bounceBallOffSlime(ball, player4);
+        // Accumulate if any slime actually bounces the ball this frame
+        kickThisFrame |= Maths.bounceBallOffSlime(ball, player1);
+        kickThisFrame |= Maths.bounceBallOffSlime(ball, player2);
+        kickThisFrame |= Maths.bounceBallOffSlime(ball, player3);
+        kickThisFrame |= Maths.bounceBallOffSlime(ball, player4);
 
-        // input
         controls();
 
-        // power-ups (if you added PowerUpManager previously)
+        // Power-ups
         if (powerUps != null) powerUps.update(ball, player1, player2, player3, player4);
 
-        // ball physics
+        // Increase update freq if near goalpost.
         if (ball.getY() >= leftGoal.getY() &&
                 (ball.getX() <= leftGoal.getX() + leftGoal.getWidth() || ball.getX() >= rightGoal.getX())) {
             for (int i = 0; i < 10; i++) {
-                if (!runGame) break;
-                ball.update(1);
-                ball.boundaries();
-                ball.crossBarCheck();
+                if (runGame) {
+                    ball.update(1);
+                    ball.boundaries();
+                    ball.crossBarCheck();
+                }
             }
         } else {
             ball.update(10);
@@ -211,7 +220,6 @@ public class SlimeSoccer {
             ball.crossBarCheck();
         }
 
-        // slimes physics
         player1.downMovement(); player1.floorCheck(); player1.gravity();
         if (player1.foulCheckLeft() || player2.foulCheckLeft() || player1.foulCheckRight() || player2.foulCheckRight())
             leftErrorBar.shrinkLeft();
@@ -230,32 +238,21 @@ public class SlimeSoccer {
 
         player4.downMovement(); player4.floorCheck(); player4.gravity();
 
-        // fouls -> stop and schedule auto reset
         if (rightErrorBar.getWidth() < 1) {
             if (gamestate == 1) player1Score++;
-            foul = true; goalScored = false;
-            runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            foul = true; runGame = false;
         }
         if (leftErrorBar.getWidth() < 1) {
             if (gamestate == 1) player2Score++;
-            foul = true; goalScored = false;
-            runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            foul = true; runGame = false;
         }
-
-        // goals -> stop and schedule auto reset
         if (ball.getX() < leftGoal.getX() + leftGoal.getWidth() && ball.getY() > leftGoal.getY()) {
             if (gamestate == 1) player2Score++;
-            goalScored = true; foul = false;
-            runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            goalScored = true; runGame = false;
         }
         if (ball.getX() > rightGoal.getX() && ball.getY() > rightGoal.getY()) {
             if (gamestate == 1) player1Score++;
-            goalScored = true; foul = false;
-            runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            goalScored = true; runGame = false;
         }
     }
 
@@ -267,25 +264,48 @@ public class SlimeSoccer {
         runGame = true;
         gamestate = 1;
         autoResetAtMs = 0;      // clear timer
+        kickThisFrame = false;
         if (powerUps != null) powerUps.clearAll(ball); // normalize physics/effects if used
     }
 
     public void sendData() {
-        int effectCode = (powerUps == null) ? 0 : powerUps.getCurrentEffectCode(); // 0..3
+        // Snapshot power-ups (limit to 4 to keep packet small)
+        java.util.List<PowerUp> pus =
+                (powerUps == null) ? java.util.Collections.emptyList() : powerUps.getItemsSnapshot();
+        int count = Math.min(pus.size(), 4);
 
-        for(ClientData client : clients) {
-            client.getOutputStream().println(
-                    player1.getX()+" "+player1.getY()+" "+player1.isFacingRight()+" "+
-                            player2.getX()+" "+player2.getY()+" "+player2.isFacingRight()+" "+
-                            player3.getX()+" "+player3.getY()+" "+player3.isFacingRight()+" "+
-                            player4.getX()+" "+player4.getY()+" "+player4.isFacingRight()+" "+
-                            ball.getX()+" "+ball.getY()+" "+
-                            player1.getColor().getRGB()+" "+player2.getColor().getRGB()+" "+player3.getColor().getRGB()+" "+player4.getColor().getRGB()+" "+
-                            goalScored+" "+foul+" "+
-                            leftErrorBar.getWidth()+" "+rightErrorBar.getWidth()+" "+rightErrorBar.getX()+" "+
-                            player1Score+" "+player2Score+" "+
-                            effectCode // NEW token at the end
-            );
+        for (ClientData client : clients) {
+            StringBuilder sb = new StringBuilder(256);
+            sb.append(player1.getX()).append(' ').append(player1.getY()).append(' ').append(player1.isFacingRight()).append(' ')
+                    .append(player2.getX()).append(' ').append(player2.getY()).append(' ').append(player2.isFacingRight()).append(' ')
+                    .append(player3.getX()).append(' ').append(player3.getY()).append(' ').append(player3.isFacingRight()).append(' ')
+                    .append(player4.getX()).append(' ').append(player4.getY()).append(' ').append(player4.isFacingRight()).append(' ')
+                    .append(ball.getX()).append(' ').append(ball.getY()).append(' ')
+                    .append(player1.getColor().getRGB()).append(' ').append(player2.getColor().getRGB()).append(' ')
+                    .append(player3.getColor().getRGB()).append(' ').append(player4.getColor().getRGB()).append(' ')
+                    .append(goalScored).append(' ').append(foul).append(' ')
+                    .append(leftErrorBar.getWidth()).append(' ').append(rightErrorBar.getWidth()).append(' ').append(rightErrorBar.getX()).append(' ')
+                    .append(player1Score).append(' ').append(player2Score).append(' ')
+                    .append(kickThisFrame ? 1 : 0).append(' ')
+                    .append(count);
+
+            for (int i = 0; i < count; i++) {
+                PowerUp p = pus.get(i);
+                int typeCode;
+                switch (p.getType()) {
+                    case LOW_GRAVITY:      typeCode = 1; break;
+                    case HEAVY:            typeCode = 2; break;
+                    case REVERSE_GRAVITY:  typeCode = 3; break;
+                    default:               typeCode = 0; break;
+                }
+                sb.append(' ')
+                        .append(p.getX()).append(' ')
+                        .append(p.getY()).append(' ')
+                        .append(typeCode).append(' ')
+                        .append(p.getRadius());
+            }
+
+            client.getOutputStream().println(sb.toString());
         }
     }
 

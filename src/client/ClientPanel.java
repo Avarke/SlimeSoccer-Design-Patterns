@@ -20,7 +20,11 @@ public class ClientPanel extends JPanel implements GameObserver
     ClientPanel(SlimeSoccer temp)
     {
         definitelynotslimesoccer = temp;
-        setPreferredSize(new Dimension(SCREENWIDTH, SCREENHEIGHT));
+        setPreferredSize(new Dimension(
+                GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().width,
+                GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height
+        ));
+        setBackground(new java.awt.Color(8,16,64));
     }
 
     @Override

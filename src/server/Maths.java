@@ -37,19 +37,21 @@ public class Maths {
         return new double[]{Math.sin(reflectionAngle)*collisionVelocity*0.6 + velX1, Math.cos(reflectionAngle)*collisionVelocity*0.6 + velY1, x2+(r1+r2-dist)*Math.sin(normal), y2+(r1+r2-dist)*Math.cos(normal)};
     }
 
-    public static void bounceBallOffSlime(Ball ball, Slime slime) {
-        if(ball.getY() > slime.getY()) { return; }
-        if(ball.getRadius()+slime.getRadius()<Math.sqrt(Math.pow(ball.getX()-slime.getX(),2)+Math.pow(ball.getY()-slime.getY(),2))) { return; }
+    public static boolean bounceBallOffSlime(Ball ball, Slime slime) {
+        if(ball.getY() > slime.getY()) return false;
+        if(ball.getRadius()+slime.getRadius()<Math.sqrt(Math.pow(ball.getX()-slime.getX(),2)+Math.pow(ball.getY()-slime.getY(),2))) return false;
 
         double normal = Math.atan2((ball.getY() - slime.getY()),(ball.getX() - slime.getX()));
 
         ball.setX(slime.getX()+Math.cos(normal)*(slime.getRadius()+ball.getRadius()+1));
         ball.setY(slime.getY()+Math.sin(normal)*(slime.getRadius()+ball.getRadius()+1));
-        if((ball.getX()-slime.getX())*(ball.getVelX()-slime.getVelX())+(ball.getY()-slime.getY())*(ball.getVelY()-slime.getVelY())>0) { return; }
+        if((ball.getX()-slime.getX())*(ball.getVelX()-slime.getVelX())+(ball.getY()-slime.getY())*(ball.getVelY()-slime.getVelY())>0) return false;
+
         double collisionVelocityAngle = Math.atan2((ball.getVelY() - slime.getVelY()),(ball.getVelX() - slime.getVelX()));
         double collisionVelocity = Math.sqrt(Math.pow(ball.getVelX() - slime.getVelX(), 2) + Math.pow(ball.getVelY() - slime.getVelY(), 2));
         double reflectionAngle = 2*normal - collisionVelocityAngle + Math.PI;
         ball.setVelX((Math.cos(reflectionAngle)*collisionVelocity*0.5)+slime.getVelX());
         ball.setVelY((Math.sin(reflectionAngle)*collisionVelocity*0.5)+slime.getVelY());
+        return true;
     }
 }

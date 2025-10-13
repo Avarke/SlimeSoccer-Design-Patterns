@@ -67,59 +67,114 @@ public class SlimeSoccer
     {
         GameData gameData = GameData.getInstance();
 
-        g.setColor(Color.BLUE);
-        g.fillRect(0, 0, 1920, 1080);
+        java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g.setColor(Color.GRAY);
-        g.fillRect(0, 900, 1920, 280);
+        // Panel size we actually have to paint into
+        java.awt.Rectangle clip = g2.getClipBounds();
+        int PW = (clip != null ? clip.width : 1920);
+        int PH = (clip != null ? clip.height : 1080);
 
-        drawSlime(g, 1, 75);
-        drawSlime(g, 2, 75);
-        drawSlime(g, 3, 75);
-        drawSlime(g, 4, 75);
+        // Fill entire panel first so no white edges ever appear
+        g2.setColor(new Color(8, 16, 64));
+        g2.fillRect(0, 0, PW, PH);
 
-        // Ball color by current effect
-        int eff = gameData.getBallEffectCode();
-        Color ballColor;
-        switch (eff) {
-            case 1: ballColor = new Color(135,206,250); break; // low-gravity (light blue)
-            case 2: ballColor = new Color(80,80,80);    break; // heavy (dark gray)
-            case 3: ballColor = new Color(255,105,180); break; // reverse (pink)
-            default: ballColor = Color.YELLOW;                 // normal
+        // ---- World coordinates (server uses 1920x1080) ----
+        final int WW = 1920, WH = 1080;
+        final int FLOOR_Y  = 879;   // (int)(0.814 * 1080)
+        final int GOAL_Y   = 720;   // (int)(0.667 * 1080)
+        final int RIGHT_GOAL_X = 1828; // (int)(0.952 * 1920)
+        final int FOUL_BAR_Y  = 930;   // (int)(0.861 * 1080)
+
+        // Uniform “fit” scale and center the world inside the panel
+        double sx = PW / (double) WW;
+        double sy = PH / (double) WH;
+        double s  = Math.min(sx, sy);
+        double tx = (PW - WW * s) * 0.5;
+        double ty = (PH - WH * s) * 0.5;
+
+        java.awt.Graphics2D gw = (java.awt.Graphics2D) g2.create();
+        gw.translate(tx, ty);
+        gw.scale(s, s); // from now on, draw in world units (1920x1080)
+
+        // Sky + ground (in world units)
+        java.awt.GradientPaint sky = new java.awt.GradientPaint(0, 0, new Color(30, 60, 200),
+                0, FLOOR_Y, new Color(10, 10, 120));
+        gw.setPaint(sky);
+        gw.fillRect(0, 0, WW, FLOOR_Y);
+
+        java.awt.GradientPaint ground = new java.awt.GradientPaint(0, FLOOR_Y, new Color(120,120,120),
+                0, WH,       new Color(90,90,90));
+        gw.setPaint(ground);
+        gw.fillRect(0, FLOOR_Y, WW, WH - FLOOR_Y);
+
+        // Slimes (classic, no stretching)
+        drawSlime(gw, 1, 75);
+        drawSlime(gw, 2, 75);
+        drawSlime(gw, 3, 75);
+        drawSlime(gw, 4, 75);
+
+        // Power-ups
+        int puc = gameData.getPowerUpCount();
+        for (int i = 0; i < puc; i++) {
+            float x = gameData.getPowerUpX(i);
+            float y = gameData.getPowerUpY(i);
+            int type = gameData.getPowerUpType(i);
+            int r = gameData.getPowerUpRadius(i);
+            Color c = switch (type) {
+                case 1 -> new Color(135,206,250);
+                case 2 -> new Color(80,80,80);
+                case 3 -> new Color(255,105,180);
+                default -> Color.WHITE;
+            };
+            gw.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 200));
+            gw.fillOval((int)(x - r), (int)(y - r), r * 2, r * 2);
+            gw.setColor(new Color(255,255,255,140));
+            gw.drawOval((int)(x - r), (int)(y - r), r * 2, r * 2);
         }
-        g.setColor(ballColor);
-        g.fillOval((int) (gameData.getBallPosX() - 20), (int) (gameData.getBallPosY() - 20), 40, 40);
 
-        // Safe halo (clamped)
-        int radius = Math.max(0, Math.min(200, (int) ((900 - gameData.getBallPosY()) / 50)));
-        g.setColor(Color.GRAY);
-        if (radius > 0) {
-            g.fillOval((int) gameData.getBallPosX() - radius, 50, radius * 2, radius * 2);
+        // Ball trail
+        float bx = gameData.getBallPosX();
+        float by = gameData.getBallPosY();
+        ballTrail.addLast(new float[]{bx, by});
+        while (ballTrail.size() > TRAIL_LEN) ballTrail.removeFirst();
+        int i = 0, n = ballTrail.size();
+        for (float[] p : ballTrail) {
+            int alpha = Math.max(20, (int)(255.0 * (i + 1) / n));
+            gw.setColor(new Color(255, 230, 80, Math.min(alpha, 180)));
+            int rr = 20 - (n - 1 - i); if (rr < 8) rr = 8;
+            gw.fillOval((int)(p[0] - rr), (int)(p[1] - rr), rr * 2, rr * 2);
+            i++;
         }
 
-        drawGoal(g, 0, 720, true);
-        drawGoal(g, 1828, 720, false);
+        // Ball + halo
+        gw.setColor(Color.YELLOW);
+        gw.fillOval((int) (bx - 20), (int) (by - 20), 40, 40);
+        int haloR = Math.max(0, Math.min(200, (FLOOR_Y - (int)by) / 50));
+        gw.setColor(new Color(160, 160, 160, 160));
+        if (haloR > 0) gw.fillOval((int) bx - haloR, (int)(0.046 * WH), haloR * 2, haloR * 2);
 
-        g.setColor(gameData.getP1Color());
-        g.fillRect(0, 930, (int) gameData.getP1FoulBarWidth(), 10);
+        // Goals & bars
+        drawGoal(gw, 0, GOAL_Y, true);
+        drawGoal(gw, RIGHT_GOAL_X, GOAL_Y, false);
 
-        g.setColor(gameData.getP3Color());
-        g.fillRect((int) gameData.getP2FoulBarX(), 930, (int) gameData.getP2FoulBarWidth(), 10);
+        gw.setColor(gameData.getP1Color());
+        gw.fillRect(0, FOUL_BAR_Y, (int) gameData.getP1FoulBarWidth(), 10);
+        gw.setColor(gameData.getP3Color());
+        gw.fillRect((int) gameData.getP2FoulBarX(), FOUL_BAR_Y, (int) gameData.getP2FoulBarWidth(), 10);
 
-        g.setFont(scoreFont);
-        g.setColor(Color.WHITE);
-        g.drawString("" + gameData.getPlayer1Score(), 50, 100);
-        g.drawString("" + gameData.getPlayer2Score(), 1700, 100);
+        // Scores / banners
+        gw.setFont(scoreFont);
+        gw.setColor(Color.WHITE);
+        gw.drawString("" + gameData.getPlayer1Score(), 50, 100);
+        gw.drawString("" + gameData.getPlayer2Score(), 1700, 100);
 
-        if (gameData.isGoalScored()) {
-            g.setFont(goalFont);
-            g.drawString("GOAL!", 550, 300);
-        }
-        if (gameData.isFoul()) {
-            g.setFont(goalFont);
-            g.drawString("FOUL!", 550, 300);
-        }
+        if (gameData.isGoalScored()) { gw.setFont(goalFont); gw.drawString("GOAL!", 550, 300); }
+        if (gameData.isFoul())       { gw.setFont(goalFont); gw.drawString("FOUL!", 550, 300); }
+
+        gw.dispose();
     }
+
 
     public void drawSlime(Graphics g, int playerIndex, int radius) {
         GameData gameData = GameData.getInstance();
@@ -128,7 +183,6 @@ public class SlimeSoccer
         boolean facingRight = false;
         Color color = Color.WHITE;
 
-        // Pick the right player's data
         switch (playerIndex) {
             case 1:
                 posX = gameData.getP1PosX();
@@ -159,24 +213,36 @@ public class SlimeSoccer
         ballPosX = gameData.getBallPosX();
         ballPosY = gameData.getBallPosY();
 
-        // --- draw the slime ---
+        // --- Classic slime: NO stretching/squashing ---
+        // Body (semicircle) — baseline exactly at posY (same as server)
+        int left = Math.round(posX - radius);
+        int top  = Math.round(posY - radius);
         g.setColor(color);
-        g.fillArc((int)(posX - radius), (int)(posY - radius), radius*2, radius*2, 0, 180);
+        g.fillArc(left, top, radius * 2, radius * 2, 0, 180);
 
-        float eyePosY = posY - 35;
-        float eyePosX = facingRight ? posX + 35 : posX - 35;
+        // Eye (same offsets server uses: 0.467 * radius)
+        float eyePosY = posY - 0.467f * radius;
+        float eyePosX = posX + (facingRight ? 1 : -1) * 0.467f * radius;
 
-        float ballDist = (float)Math.sqrt(Math.pow(ballPosX - eyePosX, 2) + Math.pow(ballPosY - eyePosY, 2));
+        float dx = ballPosX - eyePosX;
+        float dy = ballPosY - eyePosY;
+        float ballDist = (float)Math.sqrt(dx * dx + dy * dy);
+        if (ballDist < 0.001f) ballDist = 0.001f;
 
         g.setColor(Color.WHITE);
         g.fillOval((int)(eyePosX - 15), (int)(eyePosY - 15), 30, 30);
 
         g.setColor(Color.BLACK);
-        g.fillOval((int)(eyePosX + 6 * (ballPosX - eyePosX) / ballDist - 7),
-                (int)(eyePosY + 6 * (ballPosY - eyePosY) / ballDist - 7), 14, 14);
+        g.fillOval(
+                (int)(eyePosX + 6 * dx / ballDist - 7),
+                (int)(eyePosY + 6 * dy / ballDist - 7),
+                14, 14
+        );
     }
 
-	public void drawGoal(Graphics g, int posX, int posY, boolean isLeftGoal){
+    private static float clamp(float v, float lo, float hi) { return (v < lo) ? lo : (v > hi ? hi : v); }
+
+    public void drawGoal(Graphics g, int posX, int posY, boolean isLeftGoal){
 		g.setColor(Color.WHITE);
 		for(int i = 0; i < 10; i++)
 		{
@@ -195,7 +261,18 @@ public class SlimeSoccer
 			g.fillRect(posX - 10, posY - 5, 10, 190);
 		}
 	}
-	
+
+    private static class DeformState {
+        float sx = 1f, sy = 1f, vx = 0f, vy = 0f;
+        float prevX, prevY;
+        boolean inited = false;
+    }
+    private final DeformState[] deform = { new DeformState(), new DeformState(), new DeformState(), new DeformState() };
+
+    private final java.util.ArrayDeque<float[]> ballTrail = new java.util.ArrayDeque<>();
+    private static final int TRAIL_LEN = 10;
+
+
 	public static void main(String[] args)
 	{
 		new SlimeSoccer();

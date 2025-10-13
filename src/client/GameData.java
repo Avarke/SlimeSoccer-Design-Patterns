@@ -34,6 +34,32 @@ public class GameData
 
     private int ballEffectCode;
 
+    private boolean ballKickedThisFrame;
+
+    private int powerUpCount;
+    private final float[] powerUpX = new float[4];
+    private final float[] powerUpY = new float[4];
+    private final int[] powerUpType = new int[4];   // 0=normal,1=low,2=heavy,3=reverse
+    private final int[] powerUpRadius = new int[4];
+
+    public synchronized int getPowerUpCount() { return powerUpCount; }
+    public synchronized float getPowerUpX(int i) { return powerUpX[i]; }
+    public synchronized float getPowerUpY(int i) { return powerUpY[i]; }
+    public synchronized int getPowerUpType(int i) { return powerUpType[i]; }
+    public synchronized int getPowerUpRadius(int i) { return powerUpRadius[i]; }
+
+    public synchronized void setPowerUps(int count, float[] xs, float[] ys, int[] types, int[] radii) {
+        this.powerUpCount = Math.min(count, 4);
+        for (int i = 0; i < this.powerUpCount; i++) {
+            powerUpX[i] = xs[i];
+            powerUpY[i] = ys[i];
+            powerUpType[i] = types[i];
+            powerUpRadius[i] = radii[i];
+        }
+    }
+
+
+
     private final CopyOnWriteArrayList<GameObserver> observers = new CopyOnWriteArrayList<>();
 
 
@@ -59,6 +85,10 @@ public class GameData
         }
     }
 
+
+
+    public synchronized boolean isBallKickedThisFrame() { return ballKickedThisFrame; }
+    public synchronized void setBallKickedThisFrame(boolean v) { this.ballKickedThisFrame = v; }
 
     // --- Player positions ---
     public synchronized float getP1PosX() { return p1PosX; }
