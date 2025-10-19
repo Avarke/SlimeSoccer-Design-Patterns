@@ -52,4 +52,16 @@ public class Maths {
         ball.setVelX((Math.cos(reflectionAngle)*collisionVelocity*0.5)+slime.getVelX());
         ball.setVelY((Math.sin(reflectionAngle)*collisionVelocity*0.5)+slime.getVelY());
     }
+
+    public static boolean circleIntersectsRect(
+            double cx, double cy, double r,
+            double rx, double ry, double rw, double rh) {
+
+        double nx = Math.abs(cx - (rx + rw * 0.5));
+        double ny = Math.abs(cy - (ry + rh * 0.5));
+        if (nx > (rw * 0.5 + r) || ny > (rh * 0.5 + r)) return false;
+        if (nx <= rw * 0.5 || ny <= rh * 0.5) return true;
+        double dx = nx - rw * 0.5, dy = ny - rh * 0.5;
+        return dx * dx + dy * dy <= r * r;
+    }
 }

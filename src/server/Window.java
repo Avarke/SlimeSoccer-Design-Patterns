@@ -8,8 +8,7 @@ import java.awt.event.KeyListener;
 import javax.swing.JFrame;
 
 public class Window extends JFrame {
-    private static final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    public static final double WIDTH = screenSize.getWidth(), HEIGHT = screenSize.getHeight();
+    public static final double WIDTH = 1920.0, HEIGHT = 1080.0;
 
     private static final long serialVersionUID = 3685355721496314265L;
     SlimeSoccer slimesoccer;

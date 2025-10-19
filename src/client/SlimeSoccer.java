@@ -21,20 +21,24 @@ import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
 
-
-public class SlimeSoccer 
+public class SlimeSoccer
 {
     private static final double BASE_WIDTH = 1920.0;
     private static final double BASE_HEIGHT = 1080.0;
 
-	Socket socket;
-	DataInputStream is;
-	PrintStream os;
-	GameConfiguration configuration;
-	ClientWindow window;
-	private final Drawable ballDrawable;
-	Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
-	Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
+    private static final double FLOOR_Y   = 0.814 * BASE_HEIGHT;
+    private static final double FOUL_Y    = 0.861 * BASE_HEIGHT;
+    private static final double GOAL_Y    = 0.667 * BASE_HEIGHT;
+    private static final double RIGHT_GOAL_X = 0.952 * BASE_WIDTH;
+
+    Socket socket;
+    DataInputStream is;
+    PrintStream os;
+    GameConfiguration configuration;
+    ClientWindow window;
+    private final Drawable ballDrawable;
+    Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
+    Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
 
 
     public SlimeSoccer() {
@@ -53,7 +57,9 @@ public class SlimeSoccer
             e.printStackTrace();
             System.exit(-1);
         }
-        ballDrawable = new SafeZoneBallDecorator(new EffectColorBallDecorator(new BasicBallDrawable(20)));
+        ballDrawable = new SafeZoneBallDecorator(
+                new EffectColorBallDecorator(new BasicBallDrawable(20)),
+                (int)(0.814 * BASE_HEIGHT));
         new Thread(new GameInfoReceiverRunnable(socket)).start();
         try {
             os = new PrintStream(socket.getOutputStream());
@@ -73,7 +79,7 @@ public class SlimeSoccer
             // Observer will trigger repaint on incoming data; we only send inputs here
             os.println(
                     gameData.isUpPressed() + " " +
-                    gameData.isLeftPressed() + " " +
+                            gameData.isLeftPressed() + " " +
                             gameData.isRightPressed()
             );
         }
@@ -118,7 +124,7 @@ public class SlimeSoccer
         g.fillRect(0, 0, (int) BASE_WIDTH, (int) BASE_HEIGHT);
 
         g.setColor(Color.GRAY);
-        g.fillRect(0, 900, (int) BASE_WIDTH, (int) (BASE_HEIGHT - 900));
+        g.fillRect(0, (int) FLOOR_Y, (int) BASE_WIDTH, (int) (BASE_HEIGHT - FLOOR_Y));
 
         drawSlime(g, 1, 75);
         drawSlime(g, 2, 75);
@@ -128,14 +134,14 @@ public class SlimeSoccer
         drawPowerUps(g, gameData);
         ballDrawable.draw(g, gameData);
 
-        drawGoal(g, 0, 720, true);
-        drawGoal(g, 1828, 720, false);
+        drawGoal(g, 0, (int) GOAL_Y, true);
+        drawGoal(g, (int) RIGHT_GOAL_X, (int) GOAL_Y, false);
 
         g.setColor(gameData.getP1Color());
-        g.fillRect(0, 930, (int) gameData.getP1FoulBarWidth(), 10);
+        g.fillRect(0, (int) FOUL_Y, (int) gameData.getP1FoulBarWidth(), 10);
 
         g.setColor(gameData.getP3Color());
-        g.fillRect((int) gameData.getP2FoulBarX(), 930, (int) gameData.getP2FoulBarWidth(), 10);
+        g.fillRect((int) gameData.getP2FoulBarX(), (int) FOUL_Y, (int) gameData.getP2FoulBarWidth(), 10);
 
         g.setFont(scoreFont);
         g.setColor(Color.WHITE);
@@ -224,32 +230,41 @@ public class SlimeSoccer
         // Abilities HUD not used in the base build; left intentionally blank.
     }
 
-	public void drawGoal(Graphics g, int posX, int posY, boolean isLeftGoal){
-		g.setColor(Color.WHITE);
-		for(int i = 0; i < 10; i++)
-		{
-			g.fillRect(posX + (i*10), posY, 2, 182);
-		}
-		for(int i = 0; i < 19; i++)
-		{
-			g.fillRect(posX, posY + (i*10), 92, 2);
-		}
-		if(isLeftGoal)
-		{
-			g.fillRect(posX + 90, posY - 5, 10, 190);
-		}
-		if(!isLeftGoal)
-		{
-			g.fillRect(posX - 10, posY - 5, 10, 190);
-		}
-	}
-	
-	public static void main(String[] args)
-	{
-		SlimeSoccerFacade.launchClient();
-	}
+    public void drawGoal(Graphics g, int posX, int posY, boolean isLeftGoal){
+        g.setColor(Color.WHITE);
+        int xIntvl = (int)(0.005 * BASE_WIDTH);
+        int yIntvl = (int)(0.009 * BASE_HEIGHT);
+        int width = (int)(0.048 * BASE_WIDTH);
+        int height = (int)(0.169 * BASE_HEIGHT);
+        int netThickness = 2;
+        int barThickness = 10;
+
+        for(int i = 0; i < 10; i++)
+        {
+            g.fillRect(posX + (i * xIntvl), posY, netThickness, height);
+        }
+        for(int i = 0; i < 19; i++)
+        {
+            g.fillRect(posX, posY + (i * yIntvl), width, netThickness);
+        }
+        if(isLeftGoal)
+        {
+            g.fillRect(posX + width, posY - 5, barThickness, height);
+        }
+        if(!isLeftGoal)
+        {
+            g.fillRect(posX - barThickness, posY - 5, barThickness, height);
+        }
+    }
+
+    public static void main(String[] args)
+    {
+        SlimeSoccerFacade.launchClient();
+    }
 
     public GameConfiguration getConfiguration() {
         return configuration;
     }
+
+
 }

@@ -83,4 +83,5 @@ public class GameInfoReceiverRunnable implements Runnable {
             }
         }
     }
+
 }

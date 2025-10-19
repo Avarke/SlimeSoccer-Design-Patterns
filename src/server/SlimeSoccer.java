@@ -41,6 +41,10 @@ public class SlimeSoccer {
     static int player2Score = 0;
     private long autoResetAtMs = 0;
 
+    // throttle server painting to reduce CPU/GPU
+    private static final long PAINT_INTERVAL_NS = 16_666_667L; // ~60 FPS
+    private long lastPaintNs = 0;
+
     // Power-ups
     PowerUpManager powerUps;
     private final GameConfiguration configuration;
@@ -51,6 +55,10 @@ public class SlimeSoccer {
 
     public SlimeSoccer(GameConfiguration configuration) {
         this.configuration = Objects.requireNonNull(configuration, "configuration");
+
+        // Initialize game objects BEFORE showing the window to avoid nulls on first paint
+        init();
+
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 SlimeSoccer slimeSoccer;
@@ -60,18 +68,22 @@ public class SlimeSoccer {
         } catch (InvocationTargetException | InterruptedException e) {
             e.printStackTrace();
         }
+
         clients = new ArrayList<ClientData>();
         new Thread(new ConnectionReceiverRunnable(this, configuration.getPort())).start();
-        init();
+
         while (true) {
             if (runGame) {
+                long nowNs = System.nanoTime();
                 tick();
                 sendData();
-                window.repaint();
+                if (nowNs - lastPaintNs >= PAINT_INTERVAL_NS) {
+                    window.repaint();
+                    lastPaintNs = nowNs;
+                }
                 ball.crossBarCheck();
                 try { Thread.sleep(16); } catch (Exception e) {}
             } else {
-                // Auto-restart after configured delay, or allow Enter to force reset
                 if (Window.reset || (autoResetAtMs > 0 && System.currentTimeMillis() >= autoResetAtMs)) {
                     reset();
                     autoResetAtMs = 0;
@@ -108,7 +120,6 @@ public class SlimeSoccer {
         team2ScoreText = factory.createText("" + player2Score, 0.885*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, null);
         gamestate = 1;
 
-        // power-ups
         powerUps = factory.createPowerUpManager();
     }
 
@@ -194,25 +205,20 @@ public class SlimeSoccer {
     }
 
     public void tick() {
-        // player movement & eye updates
         player1.setX(player1.getX() + player1.getVelX()); player1.updateEyes();
         player2.setX(player2.getX() + player2.getVelX()); player2.updateEyes();
         player3.setX(player3.getX() + player3.getVelX()); player3.updateEyes();
         player4.setX(player4.getX() + player4.getVelX()); player4.updateEyes();
 
-        // collisions with ball
         Maths.bounceBallOffSlime(ball, player1);
         Maths.bounceBallOffSlime(ball, player2);
         Maths.bounceBallOffSlime(ball, player3);
         Maths.bounceBallOffSlime(ball, player4);
 
-        // input
         controls();
 
-        // power-ups (if you added PowerUpManager previously)
         if (powerUps != null) powerUps.update(ball, player1, player2, player3, player4);
 
-        // ball physics
         if (ball.getY() >= leftGoal.getY() &&
                 (ball.getX() <= leftGoal.getX() + leftGoal.getWidth() || ball.getX() >= rightGoal.getX())) {
             for (int i = 0; i < 10; i++) {
@@ -227,7 +233,46 @@ public class SlimeSoccer {
             ball.crossBarCheck();
         }
 
-        // slimes physics
+        // --- Goal collision detection ---
+        double lgx = leftGoal.getX(),  lgy = leftGoal.getY();
+        double lgw = leftGoal.getWidth(), lgh = leftGoal.getHeight();
+        double rgx = rightGoal.getX(), rgy = rightGoal.getY();
+        double rgw = rightGoal.getWidth(), rgh = rightGoal.getHeight();
+        double bt  = leftGoal.getBarThickness();
+
+        // Post/crossbar geometry
+        double lPostX = lgx + lgw, lPostY = lgy - 5, lPostW = bt, lPostH = lgh;
+        double rPostX = rgx - bt,  rPostY = rgy - 5, rPostW = bt, rPostH = rgh;
+        double lBarX  = lgx,       lBarY  = lgy - 5, lBarW  = lgw, lBarH  = bt;
+        double rBarX  = rgx,       rBarY  = rgy - 5, rBarW  = rgw, rBarH  = bt;
+
+        double bx = ball.getX(), by = ball.getY(), br = ball.getRadius();
+
+        // Left post
+        if (Maths.circleIntersectsRect(bx, by, br, lPostX, lPostY, lPostW, lPostH)) {
+            ball.setX(lPostX + lPostW + br + 1);
+            ball.setVelX(Math.abs(ball.getVelX()));
+            bx = ball.getX();
+        }
+        // Right post
+        if (Maths.circleIntersectsRect(bx, by, br, rPostX, rPostY, rPostW, rPostH)) {
+            ball.setX(rPostX - br - 1);
+            ball.setVelX(-Math.abs(ball.getVelX()));
+            bx = ball.getX();
+        }
+        // Crossbars
+        if (Maths.circleIntersectsRect(bx, by, br, lBarX, lBarY, lBarW, lBarH)) {
+            ball.setY(lBarY - br - 1);
+            ball.setVelY(-Math.abs(ball.getVelY()));
+            by = ball.getY();
+        }
+        if (Maths.circleIntersectsRect(bx, by, br, rBarX, rBarY, rBarW, rBarH)) {
+            ball.setY(rBarY - br - 1);
+            ball.setVelY(-Math.abs(ball.getVelY()));
+            by = ball.getY();
+        }
+
+        // --- Player physics ---
         player1.downMovement(); player1.floorCheck(); player1.gravity();
         if (player1.foulCheckLeft() || player2.foulCheckLeft() || player1.foulCheckRight() || player2.foulCheckRight())
             leftErrorBar.shrinkLeft();
@@ -246,7 +291,7 @@ public class SlimeSoccer {
 
         player4.downMovement(); player4.floorCheck(); player4.gravity();
 
-        // fouls -> stop and schedule auto reset
+        // --- Foul checks ---
         if (rightErrorBar.getWidth() < 1) {
             if (gamestate == 1) player1Score++;
             foul = true; goalScored = false;
@@ -260,34 +305,43 @@ public class SlimeSoccer {
             if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
 
-        // goals -> stop and schedule auto reset
-        if (ball.getX() < leftGoal.getX() + leftGoal.getWidth() && ball.getY() > leftGoal.getY()) {
+        // --- Refined goal detection (mouth-only) ---
+        boolean inLeftMouthY  = by - br >= lgy && by + br <= lgy + lgh;
+        boolean inRightMouthY = by - br >= rgy && by + br <= rgy + rgh;
+
+        boolean leftGoalScored  = inLeftMouthY  && (bx + br < lgx + lgw);
+        boolean rightGoalScored = inRightMouthY && (bx - br > rgx);
+
+        if (leftGoalScored) {
             if (gamestate == 1) player2Score++;
             goalScored = true; foul = false;
             runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
+            if (autoResetAtMs == 0)
+                autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
-        if (ball.getX() > rightGoal.getX() && ball.getY() > rightGoal.getY()) {
+        if (rightGoalScored) {
             if (gamestate == 1) player1Score++;
             goalScored = true; foul = false;
             runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
+            if (autoResetAtMs == 0)
+                autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
     }
 
+
     void reset() {
-        init();                 // repositions objects; scores persist
+        init();
         Window.reset = false;
         goalScored = false;
         foul = false;
         runGame = true;
         gamestate = 1;
-        autoResetAtMs = 0;      // clear timer
-        if (powerUps != null) powerUps.clearAll(ball); // normalize physics/effects if used
+        autoResetAtMs = 0;
+        if (powerUps != null) powerUps.clearAll(ball);
     }
 
     public void sendData() {
-        int effectCode = (powerUps == null) ? 0 : powerUps.getCurrentEffectCode(); // 0..3
+        int effectCode = (powerUps == null) ? 0 : powerUps.getCurrentEffectCode();
         List<PowerUp> visiblePowerUps = (powerUps == null) ? Collections.emptyList() : powerUps.getVisiblePowerUps();
 
         StringBuilder builder = new StringBuilder(256);
@@ -324,4 +378,6 @@ public class SlimeSoccer {
     public GameConfiguration getConfiguration() {
         return configuration;
     }
+
+
 }
