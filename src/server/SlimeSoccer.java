@@ -240,12 +240,13 @@ public class SlimeSoccer {
             ball.crossBarCheck();
         }
 
-        // --- Goal collision detection ---
+        // --- Goal collision detection: one-way posts ---
         double lgx = leftGoal.getX(),  lgy = leftGoal.getY();
         double lgw = leftGoal.getWidth(), lgh = leftGoal.getHeight();
         double rgx = rightGoal.getX(), rgy = rightGoal.getY();
         double rgw = rightGoal.getWidth(), rgh = rightGoal.getHeight();
         double bt  = leftGoal.getBarThickness();
+        double bx = ball.getX(), by = ball.getY(), br = ball.getRadius();
 
         // Post/crossbar geometry
         double lPostX = lgx + lgw, lPostY = lgy - 5, lPostW = bt, lPostH = lgh;
@@ -253,30 +254,38 @@ public class SlimeSoccer {
         double lBarX  = lgx,       lBarY  = lgy - 5, lBarW  = lgw, lBarH  = bt;
         double rBarX  = rgx,       rBarY  = rgy - 5, rBarW  = rgw, rBarH  = bt;
 
-        double bx = ball.getX(), by = ball.getY(), br = ball.getRadius();
+        // Left back post (behind net)
+        if (Maths.circleIntersectsRect(bx, by, br, lgx + lgw - bt, lgy - 5, bt, lgh)) {
+            double newX = lgx + lgw - br - 1;
+            if (Math.abs(ball.getX() - newX) > 0.5) {
+                ball.setX(newX);
+                ball.setVelX(-Math.abs(ball.getVelX()) * 0.7); // dampen bounce
+            } else {
+                ball.setVelX(0);
+            }
+        }
 
-        // Left post
-        if (Maths.circleIntersectsRect(bx, by, br, lPostX, lPostY, lPostW, lPostH)) {
-            ball.setX(lPostX + lPostW + br + 1);
-            ball.setVelX(Math.abs(ball.getVelX()));
-            bx = ball.getX();
-        }
-        // Right post
-        if (Maths.circleIntersectsRect(bx, by, br, rPostX, rPostY, rPostW, rPostH)) {
-            ball.setX(rPostX - br - 1);
-            ball.setVelX(-Math.abs(ball.getVelX()));
-            bx = ball.getX();
-        }
-        // Crossbars
-        if (Maths.circleIntersectsRect(bx, by, br, lBarX, lBarY, lBarW, lBarH)) {
-            ball.setY(lBarY - br - 1);
+        // Left crossbar (top)
+        if (Maths.circleIntersectsRect(bx, by, br, lgx, lgy - 5, lgw, bt)) {
+            ball.setY(lgy - br - 1);
             ball.setVelY(-Math.abs(ball.getVelY()));
-            by = ball.getY();
         }
-        if (Maths.circleIntersectsRect(bx, by, br, rBarX, rBarY, rBarW, rBarH)) {
-            ball.setY(rBarY - br - 1);
+
+        // Right back post
+        if (Maths.circleIntersectsRect(bx, by, br, rgx, rgy - 5, bt, rgh)) {
+            double newX = rgx + br + 1;
+            if (Math.abs(ball.getX() - newX) > 0.5) {
+                ball.setX(newX);
+                ball.setVelX(Math.abs(ball.getVelX()) * 0.7); // dampen bounce
+            } else {
+                ball.setVelX(0);
+            }
+        }
+
+        // Right crossbar
+        if (Maths.circleIntersectsRect(bx, by, br, rgx, rgy - 5, rgw, bt)) {
+            ball.setY(rgy - br - 1);
             ball.setVelY(-Math.abs(ball.getVelY()));
-            by = ball.getY();
         }
 
         // --- Player physics ---
@@ -312,7 +321,7 @@ public class SlimeSoccer {
             if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
 
-        // --- Refined goal detection (mouth-only) ---
+        // --- Goal detection: whole ball must cross plane inside mouth ---
         boolean inLeftMouthY  = by - br >= lgy && by + br <= lgy + lgh;
         boolean inRightMouthY = by - br >= rgy && by + br <= rgy + rgh;
 
@@ -334,7 +343,6 @@ public class SlimeSoccer {
                 autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
     }
-
 
     void reset() {
         init();
@@ -385,6 +393,4 @@ public class SlimeSoccer {
     public GameConfiguration getConfiguration() {
         return configuration;
     }
-
-
 }

@@ -21,17 +21,20 @@ public class Goal {
 
     public void draw(Graphics g) {
         g.setColor(Color.WHITE);
-        for(int i = 0; i < 10; i++) {
-            g.fillRect((int) (x + (i*xIntvl)), (int)y, (int)netThickness, (int)height);
+
+        for (int i = 0; i < 10; i++) {
+            g.fillRect((int)(x + (i * xIntvl)), (int)y, (int)netThickness, (int)height);
         }
-        for(int i = 0; i < 19; i++) {
-            g.fillRect((int)x, (int) (y + (i*yIntvl)), (int)width, (int)netThickness);
+        for (int i = 0; i < 19; i++) {
+            g.fillRect((int)(x + width - netThickness), (int)(y + (i * yIntvl)), (int)netThickness, (int)yIntvl);
         }
-        if(isLeftGoal) {
-            g.fillRect((int) (x + width), (int) (y - 5), (int)barThickness, (int)height);
-        }
-        else {
-            g.fillRect((int) (x - barThickness), (int) (y - 5), (int)barThickness, (int)height);
+
+        g.fillRect((int)x, (int)(y - 5), (int)width, (int)barThickness);
+
+        if (isLeftGoal) {
+            g.fillRect((int)(x + width - barThickness), (int)(y - 5), (int)barThickness, (int)height);
+        } else {
+            g.fillRect((int)x, (int)(y - 5), (int)barThickness, (int)height);
         }
     }
 
