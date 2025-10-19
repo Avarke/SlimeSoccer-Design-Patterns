@@ -2,19 +2,23 @@ package server;
 
 import java.awt.Color;
 
-public class DefaultGameFactory implements IGameFactory {
+public final class DefaultGameFactory extends AbstractGameFactory {
 
     public static final DefaultGameFactory INSTANCE = new DefaultGameFactory();
 
-    private DefaultGameFactory() {}
+    private static final String DEFAULT_FONT = "Franklin Gothic Medium Italic";
+
+    private DefaultGameFactory() { }
 
     @Override
-    public Ball createBall(BallType type, double x, double y) {
-        return BallFactory.createBall(type, x, y);
+    public Text createText(String content, double x, double y, int fontSize, Color color, String fontName) {
+        String resolvedFont = (fontName == null || fontName.isEmpty()) ? DEFAULT_FONT : fontName;
+        return super.createText(content, x, y, fontSize, color, resolvedFont);
     }
 
     @Override
-    public Slime createSlime(double x, double y, Color color, boolean isLeft) {
-        return SlimeFactory.createSlime(x, y, color, isLeft);
+    public PowerUpManager createPowerUpManager() {
+        PowerUpManager manager = super.createPowerUpManager();
+        return manager;
     }
 }

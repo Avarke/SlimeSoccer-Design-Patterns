@@ -7,10 +7,13 @@ import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Scanner;
 
+import common.io.DataInputStreamAdapter;
+import common.io.LineReader;
+
 public class GameInfoReceiverRunnable implements Runnable
 {
 	Socket socket;
-	DataInputStream is;
+	LineReader reader;
 	PrintStream os;
 	
 	public GameInfoReceiverRunnable(Socket newSocket)
@@ -22,7 +25,8 @@ public class GameInfoReceiverRunnable implements Runnable
 	{
 		try
 		{
-			is = new DataInputStream(socket.getInputStream());
+			DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+			reader = new DataInputStreamAdapter(inputStream);
 			os = new PrintStream(socket.getOutputStream());
 		} catch (IOException e)
 		{
@@ -35,48 +39,36 @@ public class GameInfoReceiverRunnable implements Runnable
         {
             try
             {
-                Scanner s = new Scanner(is.readLine());
+                String line = reader.readLine();
+                if (line == null) {
+                    continue;
+                }
 
-                gameData.setP1PosX(Float.parseFloat(s.next()));
-                gameData.setP1PosY(Float.parseFloat(s.next()));
-                gameData.setP1FacingRight(Boolean.parseBoolean(s.next()));
+                Scanner s = new Scanner(line);
+                GameData.SnapshotBuilder builder = GameData.newSnapshotBuilder();
 
-                gameData.setP2PosX(Float.parseFloat(s.next()));
-                gameData.setP2PosY(Float.parseFloat(s.next()));
-                gameData.setP2FacingRight(Boolean.parseBoolean(s.next()));
+                builder.withPlayerPosition(0, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
+                builder.withPlayerPosition(1, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
+                builder.withPlayerPosition(2, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
+                builder.withPlayerPosition(3, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
 
-                gameData.setP3PosX(Float.parseFloat(s.next()));
-                gameData.setP3PosY(Float.parseFloat(s.next()));
-                gameData.setP3FacingRight(Boolean.parseBoolean(s.next()));
+                builder.withBall(Float.parseFloat(s.next()), Float.parseFloat(s.next()));
 
-                gameData.setP4PosX(Float.parseFloat(s.next()));
-                gameData.setP4PosY(Float.parseFloat(s.next()));
-                gameData.setP4FacingRight(Boolean.parseBoolean(s.next()));
+                builder.withPlayerColor(0, new Color(Integer.parseInt(s.next())));
+                builder.withPlayerColor(1, new Color(Integer.parseInt(s.next())));
+                builder.withPlayerColor(2, new Color(Integer.parseInt(s.next())));
+                builder.withPlayerColor(3, new Color(Integer.parseInt(s.next())));
 
-                gameData.setBallPosX(Float.parseFloat(s.next()));
-                gameData.setBallPosY(Float.parseFloat(s.next()));
+                builder.withGoalFlags(Boolean.parseBoolean(s.next()), Boolean.parseBoolean(s.next()));
+                builder.withFoulBars(Float.parseFloat(s.next()), Float.parseFloat(s.next()), Float.parseFloat(s.next()));
+                builder.withScores(Integer.parseInt(s.next()), Integer.parseInt(s.next()));
 
-                gameData.setP1Color(new Color(Integer.parseInt(s.next())));
-                gameData.setP2Color(new Color(Integer.parseInt(s.next())));
-                gameData.setP3Color(new Color(Integer.parseInt(s.next())));
-                gameData.setP4Color(new Color(Integer.parseInt(s.next())));
-
-                gameData.setGoalScored(Boolean.parseBoolean(s.next()));
-                gameData.setFoul(Boolean.parseBoolean(s.next()));
-
-                gameData.setP1FoulBarWidth(Float.parseFloat(s.next()));
-                gameData.setP2FoulBarWidth(Float.parseFloat(s.next()));
-                gameData.setP2FoulBarX(Float.parseFloat(s.next()));
-
-                gameData.setPlayer1Score(Integer.parseInt(s.next()));
-                gameData.setPlayer2Score(Integer.parseInt(s.next()));
-
-                if (s.hasNext()) { s.next(); }
+                if (s.hasNext()) {
+                    builder.withBallEffectCode(Integer.parseInt(s.next()));
+                }
 
                 s.close();
-
-                // Notify all observers once per received frame (after all fields set)
-                gameData.notifyObservers();
+                gameData.applySnapshot(builder.build());
             } catch (IOException e) {
                 e.printStackTrace();
             }

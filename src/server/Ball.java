@@ -11,7 +11,7 @@ public class Ball {
     private double velY, velX;
 
     // Strategy for physics
-    private BallPhysicsStrategy physics = new NormalPhysics();
+    private BallPhysicsStrategy physics = BallPhysicsStrategies.normal();
 
     public Ball(double x, double y, double radius, Color color) {
         this.x = x;
@@ -69,11 +69,13 @@ public class Ball {
         this.y = y;
         this.velX = 0;
         this.velY = 0;
-        this.physics = new NormalPhysics(); // normalize physics on new round
+        this.physics = BallPhysicsStrategies.normal(); // normalize physics on new round
     }
 
     public BallPhysicsStrategy getPhysicsStrategy() { return physics; }
-    public void setPhysicsStrategy(BallPhysicsStrategy physics) { this.physics = physics; }
+    public void setPhysicsStrategy(BallPhysicsStrategy physics) {
+        this.physics = (physics != null) ? physics : BallPhysicsStrategies.normal();
+    }
 
     public double getX() { return x; }
     public void setX(double x) { this.x = x; }
@@ -85,5 +87,14 @@ public class Ball {
     public void setVelX(double velX) { this.velX = velX; }
     public double getVelY() { return velY; }
     public void setVelY(double velY) { this.velY = velY; }
+    public Color getColor() { return color; }
+
+    public Ball copyWithPosition(double newX, double newY) {
+        Ball clone = new Ball(newX, newY, radius, color);
+        clone.setVelX(velX);
+        clone.setVelY(velY);
+        clone.setPhysicsStrategy(getPhysicsStrategy());
+        return clone;
+    }
 
 }

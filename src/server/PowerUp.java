@@ -42,12 +42,7 @@ public class PowerUp {
     }
 
     public BallPhysicsStrategy createStrategy() {
-        switch (type) {
-            case LOW_GRAVITY: return new LowGravityPhysics();
-            case HEAVY: return new HeavyPhysics();
-            case REVERSE_GRAVITY: return new ReverseGravityPhysics();
-            default: return new NormalPhysics();
-        }
+        return BallPhysicsStrategies.forType(type);
     }
 
     public PowerUpType getType() { return type; }

@@ -36,7 +36,7 @@ public class PowerUpManager {
         }
 
         if (effectEndAt > 0 && now >= effectEndAt) {
-            ball.setPhysicsStrategy(new NormalPhysics());
+            ball.setPhysicsStrategy(BallPhysicsStrategies.normal());
             currentEffect = PowerUpType.NORMAL;
             effectEndAt = 0;
         }
@@ -48,7 +48,7 @@ public class PowerUpManager {
 
     public void clearAll(Ball ball) {
         items.clear();
-        ball.setPhysicsStrategy(new NormalPhysics());
+        ball.setPhysicsStrategy(BallPhysicsStrategies.normal());
         currentEffect = PowerUpType.NORMAL;
         effectEndAt = 0;
         nextSpawnAt = System.currentTimeMillis() + 4000;

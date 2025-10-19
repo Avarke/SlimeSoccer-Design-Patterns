@@ -5,10 +5,16 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JFrame;
 
+import client.command.CommandInvoker;
+import client.command.InputAction;
+import client.command.PressCommand;
+import client.command.ReleaseCommand;
+
 public class ClientWindow extends JFrame
 {
     SlimeSoccer slimesoccerclient;
     ClientPanel panel;
+    private final CommandInvoker commandInvoker;
 
     ClientWindow(SlimeSoccer temp) {
         this.slimesoccerclient = temp;
@@ -24,6 +30,10 @@ public class ClientWindow extends JFrame
 
         // Use GameData singleton
         GameData gameData = GameData.getInstance();
+        commandInvoker = new CommandInvoker(gameData);
+        commandInvoker.register(KeyEvent.VK_RIGHT, new PressCommand(InputAction.MOVE_RIGHT), new ReleaseCommand(InputAction.MOVE_RIGHT));
+        commandInvoker.register(KeyEvent.VK_LEFT, new PressCommand(InputAction.MOVE_LEFT), new ReleaseCommand(InputAction.MOVE_LEFT));
+        commandInvoker.register(KeyEvent.VK_UP, new PressCommand(InputAction.JUMP), new ReleaseCommand(InputAction.JUMP));
 
         // Register observer
         gameData.addObserver(panel);
@@ -31,32 +41,12 @@ public class ClientWindow extends JFrame
         panel.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT:
-                        gameData.setRightPressed(true);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        gameData.setLeftPressed(true);
-                        break;
-                    case KeyEvent.VK_UP:
-                        gameData.setUpPressed(true);
-                        break;
-                }
+                commandInvoker.onKeyPressed(e.getKeyCode());
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT:
-                        gameData.setRightPressed(false);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        gameData.setLeftPressed(false);
-                        break;
-                    case KeyEvent.VK_UP:
-                        gameData.setUpPressed(false);
-                        break;
-                }
+                commandInvoker.onKeyReleased(e.getKeyCode());
             }
 
             @Override

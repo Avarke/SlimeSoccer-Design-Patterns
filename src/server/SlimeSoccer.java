@@ -1,13 +1,20 @@
 package server;
 
+import common.GameConfiguration;
+import common.facade.SlimeSoccerFacade;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import javax.swing.SwingUtilities;
+
+import server.render.GraphicsSlimeRenderBridge;
+import server.render.SlimeRenderBridge;
 
 public class SlimeSoccer {
     Window window;
@@ -34,8 +41,14 @@ public class SlimeSoccer {
 
     // Power-ups
     PowerUpManager powerUps;
+    private final GameConfiguration configuration;
 
     public SlimeSoccer() {
+        this(GameConfiguration.builder().build());
+    }
+
+    public SlimeSoccer(GameConfiguration configuration) {
+        this.configuration = Objects.requireNonNull(configuration, "configuration");
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 SlimeSoccer slimeSoccer;
@@ -46,7 +59,7 @@ public class SlimeSoccer {
             e.printStackTrace();
         }
         clients = new ArrayList<ClientData>();
-        new Thread(new ConnectionReceiverRunnable(this)).start();
+        new Thread(new ConnectionReceiverRunnable(this, configuration.getPort())).start();
         init();
         while (true) {
             if (runGame) {
@@ -56,7 +69,7 @@ public class SlimeSoccer {
                 ball.crossBarCheck();
                 try { Thread.sleep(16); } catch (Exception e) {}
             } else {
-                // Auto-restart after ~2.5s, or allow Enter to force reset
+                // Auto-restart after configured delay, or allow Enter to force reset
                 if (Window.reset || (autoResetAtMs > 0 && System.currentTimeMillis() >= autoResetAtMs)) {
                     reset();
                     autoResetAtMs = 0;
@@ -72,8 +85,8 @@ public class SlimeSoccer {
         player2 = factory.createSlime(Window.WIDTH/2 - (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.CYAN, true);
         player3 = factory.createSlime(Window.WIDTH/2 + (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.RED, false);
         player4 = factory.createSlime(Window.WIDTH/2 + (2*Window.WIDTH/5), 0.814*Window.HEIGHT, new Color(255, 110, 20), false);
-        background =  new Rectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
-        floor = new Rectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
+        background = factory.createRectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
+        floor = factory.createRectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
 
         ball = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.278*Window.HEIGHT);
         ball.setRadius(20);
@@ -81,20 +94,20 @@ public class SlimeSoccer {
         ballArrow = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.046*Window.HEIGHT);
         ballArrow.setRadius(20);
 
-        leftGoal = new Goal(0, 0.667*Window.HEIGHT, true);
-        rightGoal = new Goal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
-        leftGoalFoulZone = new Rectangle(0, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
-        rightGoalFoulZone = new Rectangle(0.896*Window.WIDTH, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
-        leftErrorBar = new Rectangle(0, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player1.getColor());
-        rightErrorBar = new Rectangle(Window.WIDTH/2, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player4.getColor());
-        goalScoredText = new Text("GOAL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int) (0.278*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-        foulText = new Text("FOUL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int) (0.278*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-        team1ScoreText = new Text("" + player1Score, 0.026*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-        team2ScoreText = new Text("" + player2Score, 0.885*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
+        leftGoal = factory.createGoal(0, 0.667*Window.HEIGHT, true);
+        rightGoal = factory.createGoal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
+        leftGoalFoulZone = factory.createRectangle(0, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
+        rightGoalFoulZone = factory.createRectangle(0.896*Window.WIDTH, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
+        leftErrorBar = factory.createRectangle(0, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player1.getColor());
+        rightErrorBar = factory.createRectangle(Window.WIDTH/2, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player4.getColor());
+        goalScoredText = factory.createText("GOAL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int) (0.278*Window.HEIGHT), Color.WHITE, null);
+        foulText = factory.createText("FOUL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int) (0.278*Window.HEIGHT), Color.WHITE, null);
+        team1ScoreText = factory.createText("" + player1Score, 0.026*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, null);
+        team2ScoreText = factory.createText("" + player2Score, 0.885*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, null);
         gamestate = 1;
 
         // power-ups
-        powerUps = new PowerUpManager();
+        powerUps = factory.createPowerUpManager();
     }
 
     public void draw(Graphics g) {
@@ -110,10 +123,11 @@ public class SlimeSoccer {
         leftErrorBar.draw(g);
         rightErrorBar.draw(g);
 
-        player1.draw(g, ball.getX(), ball.getY());
-        player2.draw(g, ball.getX(), ball.getY());
-        player3.draw(g, ball.getX(), ball.getY());
-        player4.draw(g, ball.getX(), ball.getY());
+        SlimeRenderBridge slimeBridge = new GraphicsSlimeRenderBridge(g);
+        player1.draw(slimeBridge, ball.getX(), ball.getY());
+        player2.draw(slimeBridge, ball.getX(), ball.getY());
+        player3.draw(slimeBridge, ball.getX(), ball.getY());
+        player4.draw(slimeBridge, ball.getX(), ball.getY());
 
         powerUps.draw(g);
         ball.draw(g);
@@ -235,13 +249,13 @@ public class SlimeSoccer {
             if (gamestate == 1) player1Score++;
             foul = true; goalScored = false;
             runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
         if (leftErrorBar.getWidth() < 1) {
             if (gamestate == 1) player2Score++;
             foul = true; goalScored = false;
             runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
 
         // goals -> stop and schedule auto reset
@@ -249,13 +263,13 @@ public class SlimeSoccer {
             if (gamestate == 1) player2Score++;
             goalScored = true; foul = false;
             runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
         if (ball.getX() > rightGoal.getX() && ball.getY() > rightGoal.getY()) {
             if (gamestate == 1) player1Score++;
             goalScored = true; foul = false;
             runGame = false;
-            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + 2500;
+            if (autoResetAtMs == 0) autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
     }
 
@@ -290,6 +304,10 @@ public class SlimeSoccer {
     }
 
     public static void main(String[] args) {
-        new SlimeSoccer();
+        SlimeSoccerFacade.launchServer();
+    }
+
+    public GameConfiguration getConfiguration() {
+        return configuration;
     }
 }

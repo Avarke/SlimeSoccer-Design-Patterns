@@ -1,5 +1,13 @@
 package client;
 
+import common.GameConfiguration;
+import common.facade.SlimeSoccerFacade;
+
+import client.render.BasicBallDrawable;
+import client.render.Drawable;
+import client.render.EffectColorBallDecorator;
+import client.render.SafeZoneBallDecorator;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -17,20 +25,22 @@ public class SlimeSoccer
 	Socket socket;
 	DataInputStream is;
 	PrintStream os;
-	String hostName = "localhost";
+	GameConfiguration configuration;
 	ClientWindow window;
-	int port = 6969;
+	private final Drawable ballDrawable;
 	Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
 	Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
 
 
-    public SlimeSoccer()
-    {
-        hostName = JOptionPane.showInputDialog("Enter hostname");
-        window = new ClientWindow(this);
+    public SlimeSoccer() {
+        this(promptConfiguration());
+    }
 
+    public SlimeSoccer(GameConfiguration configuration) {
+        this.configuration = configuration != null ? configuration : GameConfiguration.builder().build();
+        window = new ClientWindow(this);
         try {
-            socket = new Socket(hostName, port);
+            socket = new Socket(this.configuration.getHost(), this.configuration.getPort());
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -38,6 +48,7 @@ public class SlimeSoccer
             e.printStackTrace();
             System.exit(-1);
         }
+        ballDrawable = new SafeZoneBallDecorator(new EffectColorBallDecorator(new BasicBallDrawable(20)));
         new Thread(new GameInfoReceiverRunnable(socket)).start();
         try {
             os = new PrintStream(socket.getOutputStream());
@@ -57,10 +68,17 @@ public class SlimeSoccer
             // Observer will trigger repaint on incoming data; we only send inputs here
             os.println(
                     gameData.isUpPressed() + " " +
-                            gameData.isLeftPressed() + " " +
+                    gameData.isLeftPressed() + " " +
                             gameData.isRightPressed()
             );
         }
+    }
+
+    private static GameConfiguration promptConfiguration() {
+        String hostNameInput = JOptionPane.showInputDialog("Enter hostname");
+        return GameConfiguration.builder()
+                .withHost(hostNameInput)
+                .build();
     }
 
     public void draw(Graphics g)
@@ -78,24 +96,7 @@ public class SlimeSoccer
         drawSlime(g, 3, 75);
         drawSlime(g, 4, 75);
 
-        // Ball color by current effect
-        int eff = gameData.getBallEffectCode();
-        Color ballColor;
-        switch (eff) {
-            case 1: ballColor = new Color(135,206,250); break; // low-gravity (light blue)
-            case 2: ballColor = new Color(80,80,80);    break; // heavy (dark gray)
-            case 3: ballColor = new Color(255,105,180); break; // reverse (pink)
-            default: ballColor = Color.YELLOW;                 // normal
-        }
-        g.setColor(ballColor);
-        g.fillOval((int) (gameData.getBallPosX() - 20), (int) (gameData.getBallPosY() - 20), 40, 40);
-
-        // Safe halo (clamped)
-        int radius = Math.max(0, Math.min(200, (int) ((900 - gameData.getBallPosY()) / 50)));
-        g.setColor(Color.GRAY);
-        if (radius > 0) {
-            g.fillOval((int) gameData.getBallPosX() - radius, 50, radius * 2, radius * 2);
-        }
+        ballDrawable.draw(g, gameData);
 
         drawGoal(g, 0, 720, true);
         drawGoal(g, 1828, 720, false);
@@ -198,6 +199,10 @@ public class SlimeSoccer
 	
 	public static void main(String[] args)
 	{
-		new SlimeSoccer();
+		SlimeSoccerFacade.launchClient();
 	}
+
+    public GameConfiguration getConfiguration() {
+        return configuration;
+    }
 }

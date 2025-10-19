@@ -1,5 +1,8 @@
 package server;
 
+import common.io.DataInputStreamAdapter;
+import common.io.LineReader;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -8,7 +11,7 @@ import java.util.Scanner;
 public class InputReceiverRunnable implements Runnable {
     SlimeSoccer slimeSoccer;
     Socket socket;
-    DataInputStream is;
+    LineReader reader;
     int playerNumber;
 
     public InputReceiverRunnable( SlimeSoccer newSlimeSoccer, int newPlayerNumber, Socket newSocket ){
@@ -19,13 +22,18 @@ public class InputReceiverRunnable implements Runnable {
 
     public void run() {
         try {
-            is = new DataInputStream(socket.getInputStream());
+            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+            reader = new DataInputStreamAdapter(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
         while(true){
             try {
-                Scanner s = new Scanner(is.readLine());
+                String line = reader.readLine();
+                if (line == null) {
+                    continue;
+                }
+                Scanner s = new Scanner(line);
                 switch(playerNumber){
                     case 2:
                         slimeSoccer.window.playerTwoJump=Boolean.parseBoolean(s.next());
@@ -45,6 +53,7 @@ public class InputReceiverRunnable implements Runnable {
                     default:
                         break;
                 }
+                s.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

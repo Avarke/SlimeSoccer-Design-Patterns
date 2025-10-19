@@ -6,15 +6,17 @@ import java.net.Socket;
 
 public class ConnectionReceiverRunnable implements Runnable {
     private ServerSocket echoSocket;
-    private SlimeSoccer slimeSoccer;
+    private final SlimeSoccer slimeSoccer;
+    private final int port;
 
-    public ConnectionReceiverRunnable(SlimeSoccer slimeSoccer){
+    public ConnectionReceiverRunnable(SlimeSoccer slimeSoccer, int port){
         this.slimeSoccer = slimeSoccer;
+        this.port = port;
     }
 
     public void run() {
         try {
-            echoSocket = new ServerSocket(6969);
+            echoSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
