@@ -9,6 +9,8 @@ import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import javax.swing.SwingUtilities;
@@ -286,20 +288,32 @@ public class SlimeSoccer {
 
     public void sendData() {
         int effectCode = (powerUps == null) ? 0 : powerUps.getCurrentEffectCode(); // 0..3
+        List<PowerUp> visiblePowerUps = (powerUps == null) ? Collections.emptyList() : powerUps.getVisiblePowerUps();
 
+        StringBuilder builder = new StringBuilder(256);
         for(ClientData client : clients) {
-            client.getOutputStream().println(
-                    player1.getX()+" "+player1.getY()+" "+player1.isFacingRight()+" "+
-                            player2.getX()+" "+player2.getY()+" "+player2.isFacingRight()+" "+
-                            player3.getX()+" "+player3.getY()+" "+player3.isFacingRight()+" "+
-                            player4.getX()+" "+player4.getY()+" "+player4.isFacingRight()+" "+
-                            ball.getX()+" "+ball.getY()+" "+
-                            player1.getColor().getRGB()+" "+player2.getColor().getRGB()+" "+player3.getColor().getRGB()+" "+player4.getColor().getRGB()+" "+
-                            goalScored+" "+foul+" "+
-                            leftErrorBar.getWidth()+" "+rightErrorBar.getWidth()+" "+rightErrorBar.getX()+" "+
-                            player1Score+" "+player2Score+" "+
-                            effectCode // NEW token at the end
-            );
+            builder.setLength(0);
+            builder.append(player1.getX()).append(' ').append(player1.getY()).append(' ').append(player1.isFacingRight()).append(' ')
+                    .append(player2.getX()).append(' ').append(player2.getY()).append(' ').append(player2.isFacingRight()).append(' ')
+                    .append(player3.getX()).append(' ').append(player3.getY()).append(' ').append(player3.isFacingRight()).append(' ')
+                    .append(player4.getX()).append(' ').append(player4.getY()).append(' ').append(player4.isFacingRight()).append(' ')
+                    .append(ball.getX()).append(' ').append(ball.getY()).append(' ')
+                    .append(player1.getColor().getRGB()).append(' ').append(player2.getColor().getRGB()).append(' ')
+                    .append(player3.getColor().getRGB()).append(' ').append(player4.getColor().getRGB()).append(' ')
+                    .append(goalScored).append(' ').append(foul).append(' ')
+                    .append(leftErrorBar.getWidth()).append(' ').append(rightErrorBar.getWidth()).append(' ').append(rightErrorBar.getX()).append(' ')
+                    .append(player1Score).append(' ').append(player2Score).append(' ')
+                    .append(effectCode).append(' ').append(visiblePowerUps.size());
+
+            for (PowerUp powerUp : visiblePowerUps) {
+                builder.append(' ')
+                        .append(powerUp.getX()).append(' ')
+                        .append(powerUp.getY()).append(' ')
+                        .append(powerUp.getRadius()).append(' ')
+                        .append(powerUp.getColor().getRGB());
+            }
+
+            client.getOutputStream().println(builder.toString());
         }
     }
 

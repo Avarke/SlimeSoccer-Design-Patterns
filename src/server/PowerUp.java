@@ -33,6 +33,11 @@ public class PowerUp {
         g.fillOval((int)(x - radius), (int)(y - radius), radius * 2, radius * 2);
     }
 
+    public double getX() { return x; }
+    public double getY() { return y; }
+    public int getRadius() { return radius; }
+    public Color getColor() { return color; }
+
     public boolean collides(Slime s) {
         double dx = x - s.getX();
         double dy = y - s.getY();

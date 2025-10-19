@@ -2,6 +2,7 @@ package server;
 
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -44,6 +45,10 @@ public class PowerUpManager {
 
     public void draw(Graphics g) {
         for (PowerUp p : items) p.draw(g);
+    }
+
+    public List<PowerUp> getVisiblePowerUps() {
+        return Collections.unmodifiableList(items);
     }
 
     public void clearAll(Ball ball) {

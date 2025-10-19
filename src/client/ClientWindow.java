@@ -5,6 +5,8 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JFrame;
 
+import java.awt.Color;
+
 import client.command.CommandInvoker;
 import client.command.InputAction;
 import client.command.PressCommand;
@@ -21,8 +23,11 @@ public class ClientWindow extends JFrame
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setFocusable(false);
+        setUndecorated(true);
+        setExtendedState(MAXIMIZED_BOTH);
 
         panel = new ClientPanel(slimesoccerclient);
+        panel.setBackground(Color.BLACK);
         getContentPane().add(panel);
 
         panel.setFocusable(true);
@@ -55,5 +60,6 @@ public class ClientWindow extends JFrame
 
         pack();
         setVisible(true);
+        panel.requestFocusInWindow();
     }
 }

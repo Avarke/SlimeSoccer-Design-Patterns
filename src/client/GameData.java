@@ -33,6 +33,11 @@ public final class GameData {
     private boolean leftIsPressed;
 
     private int ballEffectCode;
+    private float[] powerUpXs = new float[0];
+    private float[] powerUpYs = new float[0];
+    private float[] powerUpRadii = new float[0];
+    private int[] powerUpColors = new int[0];
+    private int powerUpCount;
 
     private final CopyOnWriteArrayList<GameObserver> observers = new CopyOnWriteArrayList<>();
 
@@ -137,6 +142,15 @@ public final class GameData {
     public synchronized boolean isLeftPressed() { return leftIsPressed; }
     public synchronized void setLeftPressed(boolean leftIsPressed) { this.leftIsPressed = leftIsPressed; }
 
+    public synchronized PowerUpSnapshot getPowerUpSnapshot() {
+        return new PowerUpSnapshot(
+                Arrays.copyOf(powerUpXs, powerUpCount),
+                Arrays.copyOf(powerUpYs, powerUpCount),
+                Arrays.copyOf(powerUpRadii, powerUpCount),
+                Arrays.copyOf(powerUpColors, powerUpCount)
+        );
+    }
+
     public void applySnapshot(Snapshot snapshot) {
         if (snapshot == null) {
             return;
@@ -175,6 +189,11 @@ public final class GameData {
 
             this.goalScored = snapshot.goalScored;
             this.foul = snapshot.foul;
+            this.powerUpCount = snapshot.powerUpCount;
+            this.powerUpXs = Arrays.copyOf(snapshot.powerUpXs, snapshot.powerUpCount);
+            this.powerUpYs = Arrays.copyOf(snapshot.powerUpYs, snapshot.powerUpCount);
+            this.powerUpRadii = Arrays.copyOf(snapshot.powerUpRadii, snapshot.powerUpCount);
+            this.powerUpColors = Arrays.copyOf(snapshot.powerUpColors, snapshot.powerUpCount);
         }
         notifyObservers();
     }
@@ -198,6 +217,11 @@ public final class GameData {
         private final boolean goalScored;
         private final boolean foul;
         private final int ballEffectCode;
+        private final float[] powerUpXs;
+        private final float[] powerUpYs;
+        private final float[] powerUpRadii;
+        private final int[] powerUpColors;
+        private final int powerUpCount;
 
         private Snapshot(SnapshotBuilder builder) {
             this.posX = Arrays.copyOf(builder.posX, builder.posX.length);
@@ -214,6 +238,11 @@ public final class GameData {
             this.goalScored = builder.goalScored;
             this.foul = builder.foul;
             this.ballEffectCode = builder.ballEffectCode;
+            this.powerUpCount = builder.powerUpCount;
+            this.powerUpXs = Arrays.copyOf(builder.powerUpXs, builder.powerUpCount);
+            this.powerUpYs = Arrays.copyOf(builder.powerUpYs, builder.powerUpCount);
+            this.powerUpRadii = Arrays.copyOf(builder.powerUpRadii, builder.powerUpCount);
+            this.powerUpColors = Arrays.copyOf(builder.powerUpColors, builder.powerUpCount);
         }
     }
 
@@ -232,6 +261,11 @@ public final class GameData {
         private boolean goalScored;
         private boolean foul;
         private int ballEffectCode;
+        private float[] powerUpXs = new float[0];
+        private float[] powerUpYs = new float[0];
+        private float[] powerUpRadii = new float[0];
+        private int[] powerUpColors = new int[0];
+        private int powerUpCount;
 
         public SnapshotBuilder withPlayer(int index, float x, float y, boolean isFacingRight, Color color) {
             return withPlayerPosition(index, x, y, isFacingRight).withPlayerColor(index, color);
@@ -281,6 +315,16 @@ public final class GameData {
             return this;
         }
 
+        public SnapshotBuilder addPowerUp(float x, float y, float radius, int color) {
+            ensureCapacity(powerUpCount + 1);
+            powerUpXs[powerUpCount] = x;
+            powerUpYs[powerUpCount] = y;
+            powerUpRadii[powerUpCount] = radius;
+            powerUpColors[powerUpCount] = color;
+            powerUpCount++;
+            return this;
+        }
+
         public Snapshot build() {
             return new Snapshot(this);
         }
@@ -289,6 +333,33 @@ public final class GameData {
             if (index < 0 || index >= posX.length) {
                 throw new IllegalArgumentException("Invalid player index: " + index);
             }
+        }
+
+        private void ensureCapacity(int capacity) {
+            if (powerUpXs.length >= capacity) {
+                return;
+            }
+            int newSize = powerUpXs.length == 0 ? capacity : Math.max(capacity, powerUpXs.length * 2);
+            powerUpXs = Arrays.copyOf(powerUpXs, newSize);
+            powerUpYs = Arrays.copyOf(powerUpYs, newSize);
+            powerUpRadii = Arrays.copyOf(powerUpRadii, newSize);
+            powerUpColors = Arrays.copyOf(powerUpColors, newSize);
+        }
+    }
+
+    public static final class PowerUpSnapshot {
+        public final float[] xs;
+        public final float[] ys;
+        public final float[] radii;
+        public final int[] colors;
+        public final int count;
+
+        private PowerUpSnapshot(float[] xs, float[] ys, float[] radii, int[] colors) {
+            this.xs = xs;
+            this.ys = ys;
+            this.radii = radii;
+            this.colors = colors;
+            this.count = xs.length;
         }
     }
 }
