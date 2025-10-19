@@ -102,11 +102,18 @@ public class SlimeSoccer {
         background = factory.createRectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
         floor = factory.createRectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
 
-        ball = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.278*Window.HEIGHT);
-        ball.setRadius(20);
+        ball = new BallBuilder()
+                .fromPrototype(BallType.NORMAL)
+                .atPosition(Window.WIDTH/2, 0.278*Window.HEIGHT)
+                .withRadius(20)
+                .withPhysicsStrategy(BallPhysicsStrategies.normal())
+                .build();
 
-        ballArrow = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.046*Window.HEIGHT);
-        ballArrow.setRadius(20);
+        ballArrow = new BallBuilder()
+                .fromPrototype(BallType.NORMAL)
+                .atPosition(Window.WIDTH/2, 0.046*Window.HEIGHT)
+                .withRadius(20)
+                .build();
 
         leftGoal = factory.createGoal(0, 0.667*Window.HEIGHT, true);
         rightGoal = factory.createGoal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
