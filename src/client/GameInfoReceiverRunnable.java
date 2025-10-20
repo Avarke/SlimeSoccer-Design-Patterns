@@ -1,17 +1,18 @@
 package client;
 
 import java.awt.Color;
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
-import common.io.DataInputStreamAdapter;
-import common.io.LineReader;
+import java.nio.charset.StandardCharsets;
+
 import common.net.GameStateJson;
 
 public class GameInfoReceiverRunnable implements Runnable {
     Socket socket;
-    LineReader reader;
+    BufferedReader reader;
     PrintStream os;
 
     public GameInfoReceiverRunnable(Socket newSocket) {
@@ -20,8 +21,7 @@ public class GameInfoReceiverRunnable implements Runnable {
 
     public void run() {
         try {
-            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
-            reader = new DataInputStreamAdapter(inputStream);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
             os = new PrintStream(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();

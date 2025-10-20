@@ -1,7 +1,7 @@
 package server;
 
 import common.GameConfiguration;
-import common.facade.SlimeSoccerFacade;
+
 import common.net.GameStateJson;
 
 import java.awt.Color;
@@ -16,8 +16,8 @@ import java.util.Objects;
 
 import javax.swing.SwingUtilities;
 
-import server.bridge.GraphicsSlimeRenderBridge;
-import server.bridge.SlimeRenderBridge;
+
+
 import server.builder.BallBuilder;
 import server.factory.DefaultGameFactory;
 import server.factory.IGameFactory;
@@ -108,14 +108,14 @@ public class SlimeSoccer {
         floor = factory.createRectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
 
         ball = new BallBuilder()
-                .fromPrototype(BallType.NORMAL)
+
                 .atPosition(Window.WIDTH/2, 0.278*Window.HEIGHT)
                 .withRadius(20)
                 .withPhysicsStrategy(BallPhysicsStrategies.normal())
                 .build();
 
         ballArrow = new BallBuilder()
-                .fromPrototype(BallType.NORMAL)
+
                 .atPosition(Window.WIDTH/2, 0.046*Window.HEIGHT)
                 .withRadius(20)
                 .build();
@@ -148,11 +148,10 @@ public class SlimeSoccer {
         leftErrorBar.draw(g);
         rightErrorBar.draw(g);
 
-        SlimeRenderBridge slimeBridge = new GraphicsSlimeRenderBridge(g);
-        player1.draw(slimeBridge, ball.getX(), ball.getY());
-        player2.draw(slimeBridge, ball.getX(), ball.getY());
-        player3.draw(slimeBridge, ball.getX(), ball.getY());
-        player4.draw(slimeBridge, ball.getX(), ball.getY());
+        player1.draw(g, ball.getX(), ball.getY());
+        player2.draw(g, ball.getX(), ball.getY());
+        player3.draw(g, ball.getX(), ball.getY());
+        player4.draw(g, ball.getX(), ball.getY());
 
         powerUps.draw(g);
         ball.draw(g);
@@ -403,7 +402,7 @@ public class SlimeSoccer {
     }
 
     public static void main(String[] args) {
-        SlimeSoccerFacade.launchServer();
+        new SlimeSoccer();
     }
 
     public GameConfiguration getConfiguration() {

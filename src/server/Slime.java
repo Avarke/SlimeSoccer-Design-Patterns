@@ -3,9 +3,6 @@ package server;
 import java.awt.Color;
 import java.awt.Graphics;
 
-import server.bridge.GraphicsSlimeRenderBridge;
-import server.bridge.SlimeRenderBridge;
-
 public class Slime {
     private double x, y, velX, velY, eyeX, eyeY;
     private static double radius, pupilSize, lowBound, jumpVel;
@@ -26,18 +23,14 @@ public class Slime {
     }
 
     public void draw(Graphics g, double ballX, double ballY) {
-        draw(new GraphicsSlimeRenderBridge(g), ballX, ballY);
-    }
-
-    public void draw(SlimeRenderBridge bridge, double ballX, double ballY) {
-        bridge.setColor(color);
-        bridge.fillArc((int) (x - radius), (int) (y - radius), (int) (radius*2), (int) (radius*2), 0, 180);
+        g.setColor(color);
+        g.fillArc((int) (x - radius), (int) (y - radius), (int) (radius*2), (int) (radius*2), 0, 180);
 
         float ballDist = (float)Math.sqrt(Math.pow(ballX-eyeX, 2) + Math.pow(ballY-eyeY, 2));
-        bridge.setColor(Color.WHITE);
-        bridge.fillOval((int) (eyeX - 15), (int) (eyeY - 15), 30, 30);
-        bridge.setColor(Color.BLACK);
-        bridge.fillOval((int)(eyeX + 6*(ballX-eyeX)/ballDist - 7), (int)(eyeY + 6*(ballY-eyeY)/ballDist - 7), (int)pupilSize, (int)pupilSize);
+        g.setColor(Color.WHITE);
+        g.fillOval((int) (eyeX - 15), (int) (eyeY - 15), 30, 30);
+        g.setColor(Color.BLACK);
+        g.fillOval((int)(eyeX + 6*(ballX-eyeX)/ballDist - 7), (int)(eyeY + 6*(ballY-eyeY)/ballDist - 7), (int)pupilSize, (int)pupilSize);
     }
 
     public void downMovement() {

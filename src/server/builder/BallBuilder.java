@@ -3,8 +3,6 @@ package server.builder;
 import java.awt.Color;
 
 import server.Ball;
-import server.BallType;
-import server.prototype.BallPrototypeRegistry;
 import server.strategy.BallPhysicsStrategy;
 import server.strategy.BallPhysicsStrategies;
 
@@ -39,17 +37,6 @@ public final class BallBuilder {
 
     public BallBuilder withPhysicsStrategy(BallPhysicsStrategy s) {
         if (s != null) this.physics = s;
-        return this;
-    }
-
-    // Optional: seed from a prototype
-    public BallBuilder fromPrototype(BallType type) {
-        Ball proto = BallPrototypeRegistry.getInstance().create(type, 0, 0);
-        this.radius = proto.getRadius();
-        this.color  = proto.getColor();
-        this.velX   = proto.getVelX();
-        this.velY   = proto.getVelY();
-        this.physics = proto.getPhysicsStrategy();
         return this;
     }
 

@@ -1,51 +1,40 @@
 package server.factory;
 
-import java.util.EnumMap;
-import java.util.Map;
+import java.awt.Color;
 
 import server.Ball;
 import server.BallType;
-import server.prototype.BallPrototypeRegistry;
+import server.PowerUpType;
+import server.strategy.BallPhysicsStrategies;
 
 public final class BallFactory {
-
-    private static final Map<BallType, IBallFactory> FACTORIES = new EnumMap<>(BallType.class);
-    private static final IBallFactory FALLBACK = new PrototypeBackedFactory(BallType.NORMAL);
-
-    static {
-        registerFactory(BallType.NORMAL, new PrototypeBackedFactory(BallType.NORMAL));
-        registerFactory(BallType.HEAVY, new PrototypeBackedFactory(BallType.HEAVY));
-        registerFactory(BallType.LIGHT, new PrototypeBackedFactory(BallType.LIGHT));
-        registerFactory(BallType.FAST, new PrototypeBackedFactory(BallType.FAST));
-        registerFactory(BallType.INVISIBLE, new PrototypeBackedFactory(BallType.INVISIBLE));
-    }
 
     private BallFactory() { }
 
     public static Ball createBall(BallType type, double x, double y) {
-        IBallFactory factory = FACTORIES.get(type);
-        if (factory == null) {
-            factory = FALLBACK;
+        Ball ball;
+        switch (type) {
+            case HEAVY:
+                ball = new Ball(x, y, 12, Color.DARK_GRAY);
+                ball.setPhysicsStrategy(BallPhysicsStrategies.forType(PowerUpType.HEAVY));
+                break;
+            case LIGHT:
+                ball = new Ball(x, y, 8, Color.LIGHT_GRAY);
+                ball.setPhysicsStrategy(BallPhysicsStrategies.forType(PowerUpType.LOW_GRAVITY));
+                break;
+            case FAST:
+                ball = new Ball(x, y, 10, Color.WHITE);
+                ball.setVelX(5);
+                ball.setVelY(-5);
+                break;
+            case INVISIBLE:
+                ball = new Ball(x, y, 10, new Color(0, 0, 0, 0));
+                break;
+            case NORMAL:
+            default:
+                ball = new Ball(x, y, 10, Color.WHITE);
+                break;
         }
-        return factory.create(x, y);
-    }
-
-    public static void registerFactory(BallType type, IBallFactory factory) {
-        if (type != null && factory != null) {
-            FACTORIES.put(type, factory);
-        }
-    }
-
-    private static class PrototypeBackedFactory implements IBallFactory {
-        private final BallType type;
-
-        PrototypeBackedFactory(BallType type) {
-            this.type = type;
-        }
-
-        @Override
-        public Ball create(double x, double y) {
-            return BallPrototypeRegistry.getInstance().create(type, x, y);
-        }
+        return ball;
     }
 }

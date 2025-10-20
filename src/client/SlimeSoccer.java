@@ -1,7 +1,7 @@
 package client;
 
 import common.GameConfiguration;
-import common.facade.SlimeSoccerFacade;
+
 import common.net.InputJson;
 
 import client.render.BasicBallDrawable;
@@ -269,7 +269,7 @@ public class SlimeSoccer
 
     public static void main(String[] args)
     {
-        SlimeSoccerFacade.launchClient();
+        new SlimeSoccer();
     }
 
     public GameConfiguration getConfiguration() {

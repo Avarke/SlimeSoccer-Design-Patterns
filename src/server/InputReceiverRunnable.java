@@ -1,17 +1,17 @@
 package server;
 
-import common.io.DataInputStreamAdapter;
-import common.io.LineReader;
 import common.net.InputJson;
 
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class InputReceiverRunnable implements Runnable {
     SlimeSoccer slimeSoccer;
     Socket socket;
-    LineReader reader;
+    BufferedReader reader;
     int playerNumber;
 
     public InputReceiverRunnable( SlimeSoccer newSlimeSoccer, int newPlayerNumber, Socket newSocket ){
@@ -22,8 +22,7 @@ public class InputReceiverRunnable implements Runnable {
 
     public void run() {
         try {
-            DataInputStream inputStream = new DataInputStream(socket.getInputStream());
-            reader = new DataInputStreamAdapter(inputStream);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
