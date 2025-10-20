@@ -8,6 +8,7 @@ import client.render.BasicBallDrawable;
 import client.render.Drawable;
 import client.render.EffectColorBallDecorator;
 import client.render.SafeZoneBallDecorator;
+import client.render.TrailGlowBallDecorator;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -37,6 +38,10 @@ public class SlimeSoccer
     PrintStream os;
     GameConfiguration configuration;
     ClientWindow window;
+    private final BasicBallDrawable baseBallDrawable;
+    private final EffectColorBallDecorator colorBallDecorator;
+    private final TrailGlowBallDecorator trailBallDecorator;
+    private final SafeZoneBallDecorator safeZoneBallDecorator;
     private final Drawable ballDrawable;
     Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
     Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
@@ -58,9 +63,11 @@ public class SlimeSoccer
             e.printStackTrace();
             System.exit(-1);
         }
-        ballDrawable = new SafeZoneBallDecorator(
-                new EffectColorBallDecorator(new BasicBallDrawable(20)),
-                (int)(0.814 * BASE_HEIGHT));
+        baseBallDrawable = new BasicBallDrawable(20);
+        colorBallDecorator = new EffectColorBallDecorator(baseBallDrawable);
+        trailBallDecorator = new TrailGlowBallDecorator(colorBallDecorator);
+        safeZoneBallDecorator = new SafeZoneBallDecorator(trailBallDecorator, (int)(0.814 * BASE_HEIGHT));
+        ballDrawable = safeZoneBallDecorator;
         new Thread(new GameInfoReceiverRunnable(socket)).start();
         try {
             os = new PrintStream(socket.getOutputStream());
@@ -133,6 +140,7 @@ public class SlimeSoccer
         drawSlime(g, 3, 75);
         drawSlime(g, 4, 75);
 
+        trailBallDecorator.applyEffect(gameData.getBallEffectCode());
         drawPowerUps(g, gameData);
         ballDrawable.draw(g, gameData);
 
