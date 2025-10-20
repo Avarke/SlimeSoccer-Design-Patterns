@@ -3,6 +3,9 @@ package server;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import server.strategy.BallPhysicsStrategies;
+import server.strategy.BallPhysicsStrategy;
+
 public class PowerUp {
     private final double x, y;
     private final int radius;

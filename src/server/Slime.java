@@ -3,8 +3,8 @@ package server;
 import java.awt.Color;
 import java.awt.Graphics;
 
-import server.render.GraphicsSlimeRenderBridge;
-import server.render.SlimeRenderBridge;
+import server.bridge.GraphicsSlimeRenderBridge;
+import server.bridge.SlimeRenderBridge;
 
 public class Slime {
     private double x, y, velX, velY, eyeX, eyeY;

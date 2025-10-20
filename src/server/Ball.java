@@ -3,6 +3,9 @@ package server;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import server.strategy.BallPhysicsStrategy;
+import server.strategy.BallPhysicsStrategies;
+
 public class Ball {
     private double x, y, lowBound, rightBound, leftCBarX, rightCBarX, cBarY;
     private double radius;

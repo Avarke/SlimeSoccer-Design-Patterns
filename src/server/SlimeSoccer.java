@@ -15,8 +15,12 @@ import java.util.Objects;
 
 import javax.swing.SwingUtilities;
 
-import server.render.GraphicsSlimeRenderBridge;
-import server.render.SlimeRenderBridge;
+import server.bridge.GraphicsSlimeRenderBridge;
+import server.bridge.SlimeRenderBridge;
+import server.builder.BallBuilder;
+import server.factory.DefaultGameFactory;
+import server.factory.IGameFactory;
+import server.strategy.BallPhysicsStrategies;
 
 public class SlimeSoccer {
     Window window;
