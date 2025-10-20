@@ -2,6 +2,7 @@ package client;
 
 import common.GameConfiguration;
 import common.facade.SlimeSoccerFacade;
+import common.net.InputJson;
 
 import client.render.BasicBallDrawable;
 import client.render.Drawable;
@@ -77,11 +78,12 @@ public class SlimeSoccer
                 e.printStackTrace();
             }
             // Observer will trigger repaint on incoming data; we only send inputs here
-            os.println(
-                    gameData.isUpPressed() + " " +
-                            gameData.isLeftPressed() + " " +
-                            gameData.isRightPressed()
+            String payload = InputJson.encode(
+                    gameData.isUpPressed(),
+                    gameData.isLeftPressed(),
+                    gameData.isRightPressed()
             );
+            os.println(payload);
         }
     }
 

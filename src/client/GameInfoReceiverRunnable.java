@@ -5,10 +5,9 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
-import java.util.Scanner;
-
 import common.io.DataInputStreamAdapter;
 import common.io.LineReader;
+import common.net.GameStateJson;
 
 public class GameInfoReceiverRunnable implements Runnable {
     Socket socket;
@@ -36,46 +35,34 @@ public class GameInfoReceiverRunnable implements Runnable {
                 if (line == null || line.isEmpty()) {
                     continue;
                 }
+                GameStateJson.State state;
+                try {
+                    state = GameStateJson.decode(line);
+                } catch (IllegalArgumentException ex) {
+                    ex.printStackTrace();
+                    continue;
+                }
 
                 GameData.SnapshotBuilder builder = GameData.newSnapshotBuilder();
-                Scanner s = new Scanner(line);
-                try {
-                    builder.withPlayerPosition(0, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
-                    builder.withPlayerPosition(1, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
-                    builder.withPlayerPosition(2, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
-                    builder.withPlayerPosition(3, Float.parseFloat(s.next()), Float.parseFloat(s.next()), Boolean.parseBoolean(s.next()));
-
-                    builder.withBall(Float.parseFloat(s.next()), Float.parseFloat(s.next()));
-
-                    builder.withPlayerColor(0, new Color(Integer.parseInt(s.next())));
-                    builder.withPlayerColor(1, new Color(Integer.parseInt(s.next())));
-                    builder.withPlayerColor(2, new Color(Integer.parseInt(s.next())));
-                    builder.withPlayerColor(3, new Color(Integer.parseInt(s.next())));
-
-                    builder.withGoalFlags(Boolean.parseBoolean(s.next()), Boolean.parseBoolean(s.next()));
-                    builder.withFoulBars(Float.parseFloat(s.next()), Float.parseFloat(s.next()), Float.parseFloat(s.next()));
-                    builder.withScores(Integer.parseInt(s.next()), Integer.parseInt(s.next()));
-
-                    int effectCode = s.hasNext() ? Integer.parseInt(s.next()) : 0;
-                    builder.withBallEffectCode(effectCode);
-
-                    int powerUpCount = s.hasNext() ? Integer.parseInt(s.next()) : 0;
-                    for (int i = 0; i < powerUpCount; i++) {
-                        if (!s.hasNext()) break;
-                        float px = Float.parseFloat(s.next());
-                        if (!s.hasNext()) break;
-                        float py = Float.parseFloat(s.next());
-                        if (!s.hasNext()) break;
-                        float radius = Float.parseFloat(s.next());
-                        if (!s.hasNext()) break;
-                        int color = Integer.parseInt(s.next());
-                        builder.addPowerUp(px, py, radius, color);
-                    }
-
-                    gameData.applySnapshot(builder.build());
-                } finally {
-                    s.close();
+                GameStateJson.PlayerState[] players = state.players;
+                int playerCount = Math.min(players.length, 4);
+                for (int i = 0; i < playerCount; i++) {
+                    GameStateJson.PlayerState p = players[i];
+                    builder.withPlayerPosition(i, (float) p.x, (float) p.y, p.facingRight);
+                    builder.withPlayerColor(i, new Color(p.color, true));
                 }
+
+                builder.withBall((float) state.ballX, (float) state.ballY);
+                builder.withGoalFlags(state.goalScored, state.foul);
+                builder.withFoulBars((float) state.leftBarWidth, (float) state.rightBarWidth, (float) state.rightBarX);
+                builder.withScores(state.leftScore, state.rightScore);
+                builder.withBallEffectCode(state.effectCode);
+
+                for (GameStateJson.PowerUpState p : state.powerUps) {
+                    builder.addPowerUp((float) p.x, (float) p.y, (float) p.radius, p.color);
+                }
+
+                gameData.applySnapshot(builder.build());
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (Exception e) {

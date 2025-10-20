@@ -2,6 +2,7 @@ package server;
 
 import common.GameConfiguration;
 import common.facade.SlimeSoccerFacade;
+import common.net.GameStateJson;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -363,30 +364,41 @@ public class SlimeSoccer {
         int effectCode = (powerUps == null) ? 0 : powerUps.getCurrentEffectCode();
         List<PowerUp> visiblePowerUps = (powerUps == null) ? Collections.emptyList() : powerUps.getVisiblePowerUps();
 
-        StringBuilder builder = new StringBuilder(256);
-        for(ClientData client : clients) {
-            builder.setLength(0);
-            builder.append(player1.getX()).append(' ').append(player1.getY()).append(' ').append(player1.isFacingRight()).append(' ')
-                    .append(player2.getX()).append(' ').append(player2.getY()).append(' ').append(player2.isFacingRight()).append(' ')
-                    .append(player3.getX()).append(' ').append(player3.getY()).append(' ').append(player3.isFacingRight()).append(' ')
-                    .append(player4.getX()).append(' ').append(player4.getY()).append(' ').append(player4.isFacingRight()).append(' ')
-                    .append(ball.getX()).append(' ').append(ball.getY()).append(' ')
-                    .append(player1.getColor().getRGB()).append(' ').append(player2.getColor().getRGB()).append(' ')
-                    .append(player3.getColor().getRGB()).append(' ').append(player4.getColor().getRGB()).append(' ')
-                    .append(goalScored).append(' ').append(foul).append(' ')
-                    .append(leftErrorBar.getWidth()).append(' ').append(rightErrorBar.getWidth()).append(' ').append(rightErrorBar.getX()).append(' ')
-                    .append(player1Score).append(' ').append(player2Score).append(' ')
-                    .append(effectCode).append(' ').append(visiblePowerUps.size());
+        GameStateJson.PlayerState[] players = new GameStateJson.PlayerState[]{
+                new GameStateJson.PlayerState(player1.getX(), player1.getY(), player1.isFacingRight(), player1.getColor().getRGB()),
+                new GameStateJson.PlayerState(player2.getX(), player2.getY(), player2.isFacingRight(), player2.getColor().getRGB()),
+                new GameStateJson.PlayerState(player3.getX(), player3.getY(), player3.isFacingRight(), player3.getColor().getRGB()),
+                new GameStateJson.PlayerState(player4.getX(), player4.getY(), player4.isFacingRight(), player4.getColor().getRGB())
+        };
 
-            for (PowerUp powerUp : visiblePowerUps) {
-                builder.append(' ')
-                        .append(powerUp.getX()).append(' ')
-                        .append(powerUp.getY()).append(' ')
-                        .append(powerUp.getRadius()).append(' ')
-                        .append(powerUp.getColor().getRGB());
-            }
+        List<GameStateJson.PowerUpState> powerStates = new ArrayList<>(visiblePowerUps.size());
+        for (PowerUp powerUp : visiblePowerUps) {
+            powerStates.add(new GameStateJson.PowerUpState(
+                    powerUp.getX(),
+                    powerUp.getY(),
+                    powerUp.getRadius(),
+                    powerUp.getColor().getRGB()
+            ));
+        }
 
-            client.getOutputStream().println(builder.toString());
+        GameStateJson.State state = new GameStateJson.State(
+                players,
+                ball.getX(),
+                ball.getY(),
+                effectCode,
+                leftErrorBar.getWidth(),
+                rightErrorBar.getWidth(),
+                rightErrorBar.getX(),
+                player1Score,
+                player2Score,
+                goalScored,
+                foul,
+                powerStates
+        );
+
+        String payload = GameStateJson.encode(state);
+        for (ClientData client : clients) {
+            client.getOutputStream().println(payload);
         }
     }
 
