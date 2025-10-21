@@ -6,6 +6,10 @@ import javax.swing.JFrame;
 import java.awt.Color;
 import client.audio.SoundManager;
 import client.audio.SoundManager.Sfx;
+import client.command.InputCommand;
+import client.command.JumpCommand;
+import client.command.MoveLeftCommand;
+import client.command.MoveRightCommand;
 
 public class ClientWindow extends JFrame
 {
@@ -15,6 +19,10 @@ public class ClientWindow extends JFrame
 
     ClientWindow(SlimeSoccer temp) {
         this.slimesoccerclient = temp;
+
+        new MoveLeftCommand();
+        new MoveRightCommand();
+        new JumpCommand();
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setFocusable(false);
@@ -29,7 +37,6 @@ public class ClientWindow extends JFrame
         panel.requestFocus();
 
         GameData gameData = GameData.getInstance();
-
         gameData.addObserver(panel);
         gameData.addObserver(new ClientAudioObserver()); // add audio observer
 
@@ -38,41 +45,20 @@ public class ClientWindow extends JFrame
         panel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT:
-                        gameData.setRightPressed(true);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        gameData.setLeftPressed(true);
-                        break;
-                    case KeyEvent.VK_UP:
-                        gameData.setUpPressed(true);
-                        break;
-                    default:
-                        break;
-                }
-
-                if (e.getKeyCode() == KeyEvent.VK_UP && !jumpHeld) {
+                InputCommand cmd = InputCommand.getCommandForKey(e.getKeyCode());
+                if (cmd != null) cmd.execute(gameData);
+                if (e.getKeyCode() == KeyEvent.VK_UP && !jumpHeld){
                     SoundManager.play(Sfx.JUMP);
                     jumpHeld = true;
                 }
+
+
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT:
-                        gameData.setRightPressed(false);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        gameData.setLeftPressed(false);
-                        break;
-                    case KeyEvent.VK_UP:
-                        gameData.setUpPressed(false);
-                        break;
-                    default:
-                        break;
-                }
+                InputCommand cmd = InputCommand.getCommandForKey(e.getKeyCode());
+                if (cmd != null) cmd.undo(gameData);
 
                 if (e.getKeyCode() == KeyEvent.VK_UP) {
                     jumpHeld = false;
