@@ -1,17 +1,13 @@
 package server.factory;
 
 import java.awt.Color;
-
-/*
-Factory for creating Slime instances.
-*/
 import server.Slime;
 
-public class SlimeFactory {
-
-    private SlimeFactory() {}
-
-    public static Slime createSlime(double x, double y, Color color, boolean isLeft) {
-        return new Slime(x, y, color, isLeft);
-    }
+public interface SlimeFactory {
+    Slime createSlime(double x, double y, Color color, boolean isLeft);
+    Slime createNormal(double x, double y, Color color, boolean isLeft);
+    Slime createHeavy(double x, double y, Color color, boolean isLeft);
+    Slime createLight(double x, double y, Color color, boolean isLeft);
+    Slime createFast(double x, double y, Color color, boolean isLeft);
+    Slime createInvisible(double x, double y, Color color, boolean isLeft);
 }

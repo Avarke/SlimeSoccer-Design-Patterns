@@ -36,6 +36,11 @@ public class PowerUp {
         g.fillOval((int)(x - radius), (int)(y - radius), radius * 2, radius * 2);
     }
 
+    /** Draw using a PowerUpRenderer (Bridge implementor). */
+    public void draw(server.render.PowerUpRenderer renderer) {
+        if (renderer != null) renderer.draw(this);
+    }
+
     public double getX() { return x; }
     public double getY() { return y; }
     public int getRadius() { return radius; }

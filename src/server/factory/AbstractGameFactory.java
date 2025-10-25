@@ -5,8 +5,6 @@ import java.awt.Color;
 /**
  * Provides shared construction logic for families of game objects.
  */
-import server.Ball;
-import server.BallType;
 import server.Goal;
 import server.PowerUpManager;
 import server.Rectangle;
@@ -16,13 +14,19 @@ import server.Text;
 public abstract class AbstractGameFactory implements IGameFactory {
 
     @Override
-    public Ball createBall(BallType type, double x, double y) {
-        return BallFactory.createBall(type, x, y);
+    public BallFactory createBallFactory() {
+        return new DefaultBallFactory();
+    }
+
+    @Override
+    public SlimeFactory createSlimeFactory() {
+        return new DefaultSlimeFactory();
     }
 
     @Override
     public Slime createSlime(double x, double y, Color color, boolean isLeft) {
-        return SlimeFactory.createSlime(x, y, color, isLeft);
+        
+        return createSlimeFactory().createSlime(x, y, color, isLeft);
     }
 
     @Override
@@ -32,7 +36,8 @@ public abstract class AbstractGameFactory implements IGameFactory {
 
     @Override
     public Goal createGoal(double x, double y, boolean isLeft) {
-        return new Goal(x, y, isLeft);
+        // Delegate Goal creation to the GoalFactory (Factory Method)
+        return new DefaultGoalFactory().createGoal(x, y, isLeft);
     }
 
     @Override

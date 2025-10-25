@@ -20,6 +20,7 @@ import javax.swing.SwingUtilities;
 
 import server.builder.BallBuilder;
 import server.factory.DefaultGameFactory;
+import server.factory.DefaultGoalFactory;
 import server.factory.IGameFactory;
 import server.strategy.BallPhysicsStrategies;
 
@@ -120,8 +121,11 @@ public class SlimeSoccer {
                 .withRadius(20)
                 .build();
 
-        leftGoal = factory.createGoal(0, 0.667*Window.HEIGHT, true);
-        rightGoal = factory.createGoal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
+
+        DefaultGoalFactory goalFactory = new DefaultGoalFactory();
+        leftGoal = goalFactory.createGoal(0, 0.667*Window.HEIGHT, true);
+        rightGoal = goalFactory.createGoal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
+
         leftGoalFoulZone = factory.createRectangle(0, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
         rightGoalFoulZone = factory.createRectangle(0.896*Window.WIDTH, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
         leftErrorBar = factory.createRectangle(0, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player1.getColor());

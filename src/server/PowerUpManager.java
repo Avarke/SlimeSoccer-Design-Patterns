@@ -46,7 +46,8 @@ public class PowerUpManager {
     }
 
     public void draw(Graphics g) {
-        for (PowerUp p : items) p.draw(g);
+        server.render.PowerUpRenderer renderer = new server.render.SwingPowerUpRenderer(g);
+        for (PowerUp p : items) p.draw(renderer);
     }
 
     public List<PowerUp> getVisiblePowerUps() {
