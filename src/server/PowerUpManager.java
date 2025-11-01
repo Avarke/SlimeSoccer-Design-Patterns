@@ -73,11 +73,13 @@ public class PowerUpManager {
     }
 
     private void spawnRandom() {
-        PowerUpType type = PowerUpType.values()[1 + rnd.nextInt(3)]; // pick from LOW/HEAVY/REVERSE
-        int r = 18;
+        PowerUpType type = PowerUpType.values()[1 + rnd.nextInt(3)];
         double x = 0.15 * Window.WIDTH + rnd.nextDouble() * (0.7 * Window.WIDTH);
-        double y = 0.78 * Window.HEIGHT - r;
-        long durMs = 6000;
-        items.add(new PowerUp(x, y, r, type, durMs));
+        double y = 0.78 * Window.HEIGHT - 18;
+
+        PowerUp prototype = PowerUpRegistry.getPrototype(type);
+        PowerUp clone = prototype.cloneWithPosition(x, y);
+
+        items.add(clone);
     }
 }

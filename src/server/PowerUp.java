@@ -6,12 +6,12 @@ import java.awt.Graphics;
 import server.strategy.BallPhysicsStrategies;
 import server.strategy.BallPhysicsStrategy;
 
-public class PowerUp {
-    private final double x, y;
+public class PowerUp implements Cloneable {
+    private double x, y;
     private final int radius;
     private final PowerUpType type;
-    private final long durationMs;
-    private final Color color;
+    private long durationMs;
+    private Color color;
 
     public PowerUp(double x, double y, int radius, PowerUpType type, long durationMs) {
         this.x = x;
@@ -60,4 +60,29 @@ public class PowerUp {
 
     public PowerUpType getType() { return type; }
     public long getDurationMs() { return durationMs; }
+
+    @Override
+    public PowerUp clone() {
+        try {
+            return (PowerUp) super.clone(); // shallow copy
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    public PowerUp deepClone() {
+        PowerUp copy = this.clone();
+        copy.color = new Color(this.color.getRGB()); // duplicate color object
+        return copy;
+    }
+
+
+    public PowerUp cloneWithPosition(double x, double y) {
+        PowerUp copy = this.deepClone(); // use deep clone by default
+        copy.x = x;
+        copy.y = y;
+        return copy;
+    }
+
+
 }
