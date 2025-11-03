@@ -2,13 +2,6 @@ package server;
 
 import java.awt.Color;
 
-/**
- * Facade that assembles a ready-to-use Slime Soccer "world"
- * (players, ball, goals, pitch, UI bars) with sensible defaults.
- *
- * Use this to build a fully wired game state in one call,
- * without touching factories or coordinates directly.
- */
 public class GameWorldFacade {
 
     private final IGameFactory factory;
@@ -21,7 +14,6 @@ public class GameWorldFacade {
         this.factory = factory;
     }
 
-    /** Build a standard world with NORMAL ball and default colors. */
     public World createDefaultWorld() {
         return createWorld(
                 BallType.NORMAL,
@@ -29,10 +21,6 @@ public class GameWorldFacade {
         );
     }
 
-    /**
-     * Build a world with a given ball type and four player colors.
-     * Uses Window.WIDTH/HEIGHT so everything fits current UI sizing.
-     */
     public World createWorld(BallType ballType, Color p1, Color p2, Color p3, Color p4) {
         // Pitch & background
         Rectangle background = new Rectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
@@ -75,7 +63,6 @@ public class GameWorldFacade {
         );
     }
 
-    /** Immutable DTO with everything a renderer/simulation needs. */
     public static class World {
         public final Rectangle background, floor;
         public final Slime player1, player2, player3, player4;
