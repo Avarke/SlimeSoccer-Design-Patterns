@@ -1,55 +1,55 @@
 package server;
 
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class InputReceiverRunnable implements Runnable {
-	SlimeSoccer slimeSoccer;
-	Socket socket;
-	DataInputStream is;
-	int playerNumber;
-	
-	public InputReceiverRunnable( SlimeSoccer newSlimeSoccer, int newPlayerNumber, Socket newSocket ){
-		slimeSoccer = newSlimeSoccer;
-		playerNumber = newPlayerNumber;
-		socket = newSocket;
-	}
-	
-	public void run() {
-		try {
-			is = new DataInputStream(socket.getInputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		while(true){
-			try {
-				Scanner s = new Scanner(is.readLine());
-				switch(playerNumber){
-				case 2:
-					slimeSoccer.window.playerTwoJump=Boolean.parseBoolean(s.next());
-					slimeSoccer.window.playerTwoLeft=Boolean.parseBoolean(s.next());
-					slimeSoccer.window.playerTwoRight=Boolean.parseBoolean(s.next());
-					break;
-				case 3:
-					slimeSoccer.window.playerThreeJump=Boolean.parseBoolean(s.next());
-					slimeSoccer.window.playerThreeLeft=Boolean.parseBoolean(s.next());
-					slimeSoccer.window.playerThreeRight=Boolean.parseBoolean(s.next());
-					break;
-				case 4:
-					slimeSoccer.window.playerFourJump=Boolean.parseBoolean(s.next());
-					slimeSoccer.window.playerFourLeft=Boolean.parseBoolean(s.next());
-					slimeSoccer.window.playerFourRight=Boolean.parseBoolean(s.next());
-					break;			
-				default:
-					break;
-				}
+    SlimeSoccer slimeSoccer;
+    Socket socket;
+    BufferedReader reader;
+    int playerNumber;
 
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+    public InputReceiverRunnable(SlimeSoccer s, int playerNum, Socket sock) {
+        this.slimeSoccer = s;
+        this.playerNumber = playerNum;
+        this.socket = sock;
+    }
 
+    @Override
+    public void run() {
+        try {
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (IOException e) {
+            return;
+        }
+        while (true) {
+            String line;
+            try {
+                line = reader.readLine();
+                if (line == null) break;
+            } catch (IOException e) {
+                break;
+            }
+            boolean left = false;
+            boolean right = false;
+            boolean jump = false;
+            boolean reset = false;
+            Scanner s = new Scanner(line);
+            if (s.hasNext()) jump = Boolean.parseBoolean(s.next());
+            if (s.hasNext()) left = Boolean.parseBoolean(s.next());
+            if (s.hasNext()) right = Boolean.parseBoolean(s.next());
+            if (s.hasNext()) reset = Boolean.parseBoolean(s.next());
+            s.close();
+            slimeSoccer.getInputState().set(playerNumber, left, right, jump);
+            slimeSoccer.getInputState().reset = reset;
+        }
+        try {
+            reader.close();
+            socket.close();
+        } catch (IOException ignored) {
+        }
+    }
 }
