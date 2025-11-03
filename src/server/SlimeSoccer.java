@@ -70,32 +70,30 @@ public class SlimeSoccer
 		}
 	}
 
-	public void init() {
-		IGameFactory factory = DefaultGameFactory.INSTANCE;
-		player1 = factory.createSlime(Window.WIDTH/2 - (2*Window.WIDTH/5), 0.814*Window.HEIGHT, Color.GREEN, true);
-		player2 = factory.createSlime(Window.WIDTH/2 - (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.CYAN, true);
-		player3 = factory.createSlime(Window.WIDTH/2 + (Window.WIDTH/5), 0.814*Window.HEIGHT, Color.RED, false);
-		player4 = factory.createSlime(Window.WIDTH/2 + (2*Window.WIDTH/5), 0.814*Window.HEIGHT, new Color(255, 110, 20), false);
-		background =  new Rectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
-		floor = new Rectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
+    public void init() {
+        GameWorldFacade facade = new GameWorldFacade();
+        GameWorldFacade.World w = facade.createDefaultWorld();
 
-		ball = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.278*Window.HEIGHT);
-		ball.setRadius(20);
+        player1 = w.player1;
+        player2 = w.player2;
+        player3 = w.player3;
+        player4 = w.player4;
+        background = w.background;
+        floor = w.floor;
+        ball = w.ball;
+        ballArrow = w.ballArrow;
+        leftGoal = w.leftGoal;
+        rightGoal = w.rightGoal;
+        leftGoalFoulZone = w.leftGoalFoulZone;
+        rightGoalFoulZone = w.rightGoalFoulZone;
+        leftErrorBar = w.leftErrorBar;
+        rightErrorBar = w.rightErrorBar;
 
-		ballArrow = factory.createBall(BallType.NORMAL, Window.WIDTH/2, 0.046*Window.HEIGHT);
-		ballArrow.setRadius(20);
-
-		leftGoal = new Goal(0, 0.667*Window.HEIGHT, true);
-		rightGoal = new Goal(0.952*Window.WIDTH, 0.667*Window.HEIGHT, false);
-		leftGoalFoulZone = new Rectangle(0, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
-		rightGoalFoulZone = new Rectangle(0.896*Window.WIDTH, 0.835*Window.HEIGHT, 0.104*Window.WIDTH, 0.009*Window.HEIGHT, Color.WHITE);
-		leftErrorBar = new Rectangle(0, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player1.getColor());
-		rightErrorBar = new Rectangle(Window.WIDTH/2, 0.861*Window.HEIGHT, Window.WIDTH/2, 10, player4.getColor());
-		goalScoredText = new Text("GOAL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int) (0.278*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-		foulText = new Text("FOUL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int) (0.278*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-		team1ScoreText = new Text("" + player1Score, 0.026*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-		team2ScoreText = new Text("" + player2Score, 0.885*Window.WIDTH, 0.093*Window.HEIGHT, (int) (0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
-		gamestate = 1;
+        goalScoredText = new Text("GOAL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int)(0.278*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
+        foulText = new Text("FOUL!", 0.286*Window.WIDTH, 0.278*Window.HEIGHT, (int)(0.278*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
+        team1ScoreText = new Text("" + player1Score, 0.026*Window.WIDTH, 0.093*Window.HEIGHT, (int)(0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
+        team2ScoreText = new Text("" + player2Score, 0.885*Window.WIDTH, 0.093*Window.HEIGHT, (int)(0.074*Window.HEIGHT), Color.WHITE, "Franklin Gothic Medium Italic");
+        gamestate = 1;
 
 		/*
 		Ball normal = BallFactory.createBall(BallType.NORMAL, 300, 100);
