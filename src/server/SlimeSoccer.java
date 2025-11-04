@@ -18,7 +18,9 @@ import javax.swing.SwingUtilities;
 
 
 
-import server.builder.BallBuilder;
+import server.builder.BallDirector;
+import server.builder.ClassicBallBuilder;
+import server.builder.HeavyBallBuilder;
 import server.factory.DefaultGameFactory;
 import server.factory.DefaultGoalFactory;
 import server.factory.IGameFactory;
@@ -108,18 +110,20 @@ public class SlimeSoccer {
         background = factory.createRectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
         floor = factory.createRectangle(0, 0.814*Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814*Window.HEIGHT, Color.GRAY);
 
-        ball = new BallBuilder()
+        BallDirector director = new BallDirector();
 
-                .atPosition(Window.WIDTH/2, 0.278*Window.HEIGHT)
-                .withRadius(20)
-                .withPhysicsStrategy(BallPhysicsStrategies.normal())
-                .build();
+        ball = director.construct(
+                new ClassicBallBuilder()
+                        .radius(20)
+                        .physics(BallPhysicsStrategies.normal()),
+                Window.WIDTH / 2, 0.278 * Window.HEIGHT
+        );
 
-        ballArrow = new BallBuilder()
-
-                .atPosition(Window.WIDTH/2, 0.046*Window.HEIGHT)
-                .withRadius(20)
-                .build();
+        ballArrow = director.construct(
+                new HeavyBallBuilder()
+                        .radius(20),
+                Window.WIDTH / 2, 0.046 * Window.HEIGHT
+        );
 
 
         DefaultGoalFactory goalFactory = new DefaultGoalFactory();

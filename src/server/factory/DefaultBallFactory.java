@@ -5,20 +5,24 @@ import java.awt.Color;
 import server.Ball;
 import server.PowerUpType;
 import server.strategy.BallPhysicsStrategies;
+import server.builder.BallDirector;
+import server.builder.ClassicBallBuilder;
+import server.builder.HeavyBallBuilder;
+
 
 
 public class DefaultBallFactory implements BallFactory {
 
+    private final BallDirector director = new BallDirector();
+
     @Override
     public Ball createNormal(double x, double y) {
-        return new NormalBall(x, y);
+        return director.construct(new ClassicBallBuilder(), x, y);
     }
 
     @Override
     public Ball createHeavy(double x, double y) {
-        Ball ball = new HeavyBall(x, y);
-        ball.setPhysicsStrategy(BallPhysicsStrategies.forType(PowerUpType.HEAVY));
-        return ball;
+        return director.construct(new HeavyBallBuilder(), x, y);
     }
 
     @Override
