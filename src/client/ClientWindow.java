@@ -15,7 +15,6 @@ public class ClientWindow extends JFrame
 {
     SlimeSoccer slimesoccerclient;
     ClientPanel panel;
-    private boolean jumpHeld = false;
 
     ClientWindow(SlimeSoccer temp) {
         this.slimesoccerclient = temp;
