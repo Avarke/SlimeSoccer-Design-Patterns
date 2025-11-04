@@ -46,7 +46,10 @@ public class SlimeSoccer {
         } catch (InvocationTargetException | InterruptedException e) {
             e.printStackTrace();
         }
-        input = new KeyboardWindowAdapter();
+        PlayerInput keyboard = new KeyboardWindowAdapter();
+        PerPlayerInput mixed = new PerPlayerInput(keyboard);
+        mixed.set(2, new AIAdapter(2));
+        input = mixed;
         inputState = new InputState();
         clients = new ArrayList<ClientData>();
         new Thread(new ConnectionReceiverRunnable(this)).start();
@@ -66,14 +69,6 @@ public class SlimeSoccer {
                 }
             }
         }
-    }
-
-    public void useKeyboardInput() {
-        input = new KeyboardWindowAdapter();
-    }
-
-    public void useNetworkInput() {
-        input = new NetworkPacketAdapter(inputState);
     }
 
     public InputState getInputState() {

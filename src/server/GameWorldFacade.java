@@ -22,7 +22,7 @@ public class GameWorldFacade {
     }
 
     public World createWorld(BallType ballType, Color p1, Color p2, Color p3, Color p4) {
-        // Pitch & background
+        // Background
         Rectangle background = new Rectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
         Rectangle floor = new Rectangle(
                 0, 0.814 * Window.HEIGHT,
@@ -36,20 +36,20 @@ public class GameWorldFacade {
         Slime player3 = factory.createSlime(Window.WIDTH / 2 + (Window.WIDTH / 5),      0.814 * Window.HEIGHT, p3, false);
         Slime player4 = factory.createSlime(Window.WIDTH / 2 + (2 * Window.WIDTH / 5),  0.814 * Window.HEIGHT, p4, false);
 
-        // Ball + aiming arrow
+        // Ball
         Ball ball = factory.createBall(ballType, Window.WIDTH / 2, 0.278 * Window.HEIGHT);
         ball.setRadius(20);
         Ball ballArrow = factory.createBall(BallType.NORMAL, Window.WIDTH / 2, 0.046 * Window.HEIGHT);
         ballArrow.setRadius(20);
 
-        // Goals & foul zones
+        // Goals
         Goal leftGoal = new Goal(0, 0.667 * Window.HEIGHT, true);
         Goal rightGoal = new Goal(0.952 * Window.WIDTH, 0.667 * Window.HEIGHT, false);
 
         Rectangle leftGoalFoulZone  = new Rectangle(0,                 0.835 * Window.HEIGHT, 0.104 * Window.WIDTH, 0.009 * Window.HEIGHT, Color.WHITE);
         Rectangle rightGoalFoulZone = new Rectangle(0.896 * Window.WIDTH, 0.835 * Window.HEIGHT, 0.104 * Window.WIDTH, 0.009 * Window.HEIGHT, Color.WHITE);
 
-        // Error bars (visualization of fouls/boosts)
+        // Error bars
         Rectangle leftErrorBar  = new Rectangle(0,                  0.861 * Window.HEIGHT, Window.WIDTH / 2, 10, player1.getColor());
         Rectangle rightErrorBar = new Rectangle(Window.WIDTH / 2.0, 0.861 * Window.HEIGHT, Window.WIDTH / 2, 10, player4.getColor());
 
