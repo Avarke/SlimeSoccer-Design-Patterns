@@ -15,7 +15,6 @@ public class ClientWindow extends JFrame
 {
     SlimeSoccer slimesoccerclient;
     ClientPanel panel;
-    private boolean jumpHeld = false;
 
     ClientWindow(SlimeSoccer temp) {
         this.slimesoccerclient = temp;
@@ -47,22 +46,12 @@ public class ClientWindow extends JFrame
             public void keyPressed(KeyEvent e) {
                 InputCommand cmd = InputCommand.getCommandForKey(e.getKeyCode());
                 if (cmd != null) cmd.execute(gameData);
-                if (e.getKeyCode() == KeyEvent.VK_UP && !jumpHeld){
-                    SoundManager.play(Sfx.JUMP);
-                    jumpHeld = true;
-                }
-
-
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
                 InputCommand cmd = InputCommand.getCommandForKey(e.getKeyCode());
                 if (cmd != null) cmd.undo(gameData);
-
-                if (e.getKeyCode() == KeyEvent.VK_UP) {
-                    jumpHeld = false;
-                }
             }
         });
 
