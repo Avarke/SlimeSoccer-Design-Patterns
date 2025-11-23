@@ -1,0 +1,5 @@
+State vs. Strategy (for the fatigue system)
+- State changes over time based on the slime's stamina; Strategy is chosen externally.
+- State objects define transitions (Fresh -> Tired -> Exhausted -> Recovering); Strategy does not encode transitions.
+- Behavior depends on internal context (stamina + current state), not just a pluggable algorithm choice.
+- The fatigue logic evolves during play; Strategy would stay fixed unless swapped manually.

@@ -23,14 +23,13 @@ import java.net.UnknownHostException;
 
 import javax.swing.JOptionPane;
 
-public class SlimeSoccer
-{
+public class SlimeSoccer {
     private static final double BASE_WIDTH = 1920.0;
     private static final double BASE_HEIGHT = 1080.0;
 
-    private static final double FLOOR_Y   = 0.814 * BASE_HEIGHT;
-    private static final double FOUL_Y    = 0.861 * BASE_HEIGHT;
-    private static final double GOAL_Y    = 0.667 * BASE_HEIGHT;
+    private static final double FLOOR_Y = 0.814 * BASE_HEIGHT;
+    private static final double FOUL_Y = 0.861 * BASE_HEIGHT;
+    private static final double GOAL_Y = 0.667 * BASE_HEIGHT;
     private static final double RIGHT_GOAL_X = 0.952 * BASE_WIDTH;
 
     Socket socket;
@@ -45,7 +44,6 @@ public class SlimeSoccer
     private final Drawable ballDrawable;
     Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
     Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
-
 
     public SlimeSoccer() {
         this(promptConfiguration());
@@ -66,7 +64,7 @@ public class SlimeSoccer
         baseBallDrawable = new BasicBallDrawable(20);
         colorBallDecorator = new EffectColorBallDecorator(baseBallDrawable);
         trailBallDecorator = new TrailGlowBallDecorator(colorBallDecorator);
-        safeZoneBallDecorator = new SafeZoneBallDecorator(trailBallDecorator, (int)(0.814 * BASE_HEIGHT));
+        safeZoneBallDecorator = new SafeZoneBallDecorator(trailBallDecorator, (int) (0.814 * BASE_HEIGHT));
         ballDrawable = safeZoneBallDecorator;
         new Thread(new GameInfoReceiverRunnable(socket)).start();
         try {
@@ -77,8 +75,7 @@ public class SlimeSoccer
 
         GameData gameData = GameData.getInstance();
 
-        while(true)
-        {
+        while (true) {
             try {
                 Thread.sleep(16);
             } catch (InterruptedException e) {
@@ -88,8 +85,7 @@ public class SlimeSoccer
             String payload = InputJson.encode(
                     gameData.isUpPressed(),
                     gameData.isLeftPressed(),
-                    gameData.isRightPressed()
-            );
+                    gameData.isRightPressed());
             os.println(payload);
         }
     }
@@ -101,8 +97,7 @@ public class SlimeSoccer
                 .build();
     }
 
-    public void draw(Graphics g)
-    {
+    public void draw(Graphics g) {
         GameData gameData = GameData.getInstance();
 
         Graphics2D g2 = (Graphics2D) g;
@@ -168,6 +163,15 @@ public class SlimeSoccer
         }
 
         drawAbilityHud(g, gameData);
+
+        // Draw stamina bars for each player
+        drawStaminaBar(g, 1, gameData);
+        drawStaminaBar(g, 2, gameData);
+        drawStaminaBar(g, 3, gameData);
+        drawStaminaBar(g, 4, gameData);
+
+        // Draw match phase overlay if present
+        drawMatchPhaseOverlay(g, gameData);
     }
 
     public void drawSlime(Graphics g, int playerIndex, int radius) {
@@ -210,19 +214,19 @@ public class SlimeSoccer
 
         // --- draw the slime ---
         g.setColor(color);
-        g.fillArc((int)(posX - radius), (int)(posY - radius), radius*2, radius*2, 0, 180);
+        g.fillArc((int) (posX - radius), (int) (posY - radius), radius * 2, radius * 2, 0, 180);
 
         float eyePosY = posY - 35;
         float eyePosX = facingRight ? posX + 35 : posX - 35;
 
-        float ballDist = (float)Math.sqrt(Math.pow(ballPosX - eyePosX, 2) + Math.pow(ballPosY - eyePosY, 2));
+        float ballDist = (float) Math.sqrt(Math.pow(ballPosX - eyePosX, 2) + Math.pow(ballPosY - eyePosY, 2));
 
         g.setColor(Color.WHITE);
-        g.fillOval((int)(eyePosX - 15), (int)(eyePosY - 15), 30, 30);
+        g.fillOval((int) (eyePosX - 15), (int) (eyePosY - 15), 30, 30);
 
         g.setColor(Color.BLACK);
-        g.fillOval((int)(eyePosX + 6 * (ballPosX - eyePosX) / ballDist - 7),
-                (int)(eyePosY + 6 * (ballPosY - eyePosY) / ballDist - 7), 14, 14);
+        g.fillOval((int) (eyePosX + 6 * (ballPosX - eyePosX) / ballDist - 7),
+                (int) (eyePosY + 6 * (ballPosY - eyePosY) / ballDist - 7), 14, 14);
     }
 
     private void drawPowerUps(Graphics2D g, GameData data) {
@@ -240,41 +244,125 @@ public class SlimeSoccer
         // Abilities HUD not used in the base build; left intentionally blank.
     }
 
-    public void drawGoal(Graphics g, int posX, int posY, boolean isLeftGoal){
+    /**
+     * Draws a stamina bar above each player's slime.
+     */
+    private void drawStaminaBar(Graphics2D g, int playerIndex, GameData gameData) {
+        float posX = 0, posY = 0, stamina = 100f;
+
+        // Get player position and stamina
+        switch (playerIndex) {
+            case 1:
+                posX = gameData.getP1PosX();
+                posY = gameData.getP1PosY();
+                stamina = gameData.getP1Stamina();
+                break;
+            case 2:
+                posX = gameData.getP2PosX();
+                posY = gameData.getP2PosY();
+                stamina = gameData.getP2Stamina();
+                break;
+            case 3:
+                posX = gameData.getP3PosX();
+                posY = gameData.getP3PosY();
+                stamina = gameData.getP3Stamina();
+                break;
+            case 4:
+                posX = gameData.getP4PosX();
+                posY = gameData.getP4PosY();
+                stamina = gameData.getP4Stamina();
+                break;
+        }
+
+        // Stamina bar dimensions
+        int barWidth = 100;
+        int barHeight = 10;
+        int barX = (int) (posX - barWidth / 2);
+        int barY = (int) (posY - 120); // Above the slime
+
+        // Background (empty bar)
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(barX, barY, barWidth, barHeight);
+
+        // Foreground (filled based on stamina)
+        int filledWidth = (int) (barWidth * (stamina / 100f));
+
+        // Color based on stamina level
+        Color staminaColor;
+        if (stamina > 80) {
+            staminaColor = new Color(0, 255, 0); // Green (Fresh)
+        } else if (stamina > 50) {
+            staminaColor = new Color(255, 255, 0); // Yellow (Tired)
+        } else if (stamina > 20) {
+            staminaColor = new Color(255, 165, 0); // Orange (Exhausted)
+        } else {
+            staminaColor = new Color(255, 0, 0); // Red (Recovering)
+        }
+
+        g.setColor(staminaColor);
+        g.fillRect(barX, barY, filledWidth, barHeight);
+
+        // Border
         g.setColor(Color.WHITE);
-        int xIntvl = (int)(0.005 * BASE_WIDTH);
-        int yIntvl = (int)(0.009 * BASE_HEIGHT);
-        int width = (int)(0.048 * BASE_WIDTH);
-        int height = (int)(0.169 * BASE_HEIGHT);
+        g.drawRect(barX, barY, barWidth, barHeight);
+    }
+
+    /**
+     * Draws match phase overlay (e.g., "HALF TIME", "FIRST HALF").
+     */
+    private void drawMatchPhaseOverlay(Graphics2D g, GameData gameData) {
+        String matchPhase = gameData.getMatchPhase();
+
+        // Only draw if matchPhase is not empty
+        if (matchPhase != null && !matchPhase.trim().isEmpty()) {
+            Font phaseFont = new Font("Franklin Gothic Medium Italic", Font.BOLD, 120);
+            g.setFont(phaseFont);
+            g.setColor(new Color(255, 255, 255, 200)); // Semi-transparent white
+
+            // Center the text
+            int textWidth = g.getFontMetrics().stringWidth(matchPhase);
+            int textX = (int) ((BASE_WIDTH - textWidth) / 2);
+            int textY = (int) (BASE_HEIGHT / 2 - 100);
+
+            // Draw shadow for better visibility
+            g.setColor(new Color(0, 0, 0, 150));
+            g.drawString(matchPhase, textX + 3, textY + 3);
+
+            // Draw main text
+            g.setColor(new Color(255, 255, 255, 220));
+            g.drawString(matchPhase, textX, textY);
+        }
+    }
+
+    public void drawGoal(Graphics g, int posX, int posY, boolean isLeftGoal) {
+        g.setColor(Color.WHITE);
+        int xIntvl = (int) (0.005 * BASE_WIDTH);
+        int yIntvl = (int) (0.009 * BASE_HEIGHT);
+        int width = (int) (0.048 * BASE_WIDTH);
+        int height = (int) (0.169 * BASE_HEIGHT);
         int netThickness = 2;
         int barThickness = 10;
 
-        for(int i = 0; i < 10; i++)
-        {
+        for (int i = 0; i < 10; i++) {
             g.fillRect(posX + (i * xIntvl), posY, netThickness, height);
         }
-        for(int i = 0; i < 19; i++)
-        {
+        for (int i = 0; i < 19; i++) {
             g.fillRect(posX, posY + (i * yIntvl), width, netThickness);
         }
-        if(isLeftGoal)
-        {
+        if (isLeftGoal) {
             g.fillRect(posX + width, posY - 5, barThickness, height);
         }
-        if(!isLeftGoal)
-        {
+        if (!isLeftGoal) {
             g.fillRect(posX - barThickness, posY - 5, barThickness, height);
         }
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         new SlimeSoccer();
     }
 
     public GameConfiguration getConfiguration() {
         return configuration;
     }
-
 
 }

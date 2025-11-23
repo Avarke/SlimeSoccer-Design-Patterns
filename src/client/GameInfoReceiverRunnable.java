@@ -50,6 +50,7 @@ public class GameInfoReceiverRunnable implements Runnable {
                     GameStateJson.PlayerState p = players[i];
                     builder.withPlayerPosition(i, (float) p.x, (float) p.y, p.facingRight);
                     builder.withPlayerColor(i, new Color(p.color, true));
+                    builder.withPlayerStamina(i, (float) p.stamina);
                 }
 
                 builder.withBall((float) state.ballX, (float) state.ballY);
@@ -57,6 +58,7 @@ public class GameInfoReceiverRunnable implements Runnable {
                 builder.withFoulBars((float) state.leftBarWidth, (float) state.rightBarWidth, (float) state.rightBarX);
                 builder.withScores(state.leftScore, state.rightScore);
                 builder.withBallEffectCode(state.effectCode);
+                builder.withMatchPhase(state.matchPhase);
 
                 for (GameStateJson.PowerUpState p : state.powerUps) {
                     builder.addPowerUp((float) p.x, (float) p.y, (float) p.radius, p.color);

@@ -5,11 +5,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Serialises and deserialises game-state snapshots for TCP transport using a compact JSON format.
+ * Serialises and deserialises game-state snapshots for TCP transport using a
+ * compact JSON format.
  */
 public final class GameStateJson {
 
-    private GameStateJson() { }
+    private GameStateJson() {
+    }
 
     public static String encode(State state) {
         if (state == null) {
@@ -19,12 +21,14 @@ public final class GameStateJson {
         builder.append("{\"p\":[");
         for (int i = 0; i < state.players.length; i++) {
             PlayerState p = state.players[i];
-            if (i > 0) builder.append(',');
+            if (i > 0)
+                builder.append(',');
             builder.append('[')
                     .append(trimDouble(p.x)).append(',')
                     .append(trimDouble(p.y)).append(',')
                     .append(p.facingRight).append(',')
-                    .append(p.color)
+                    .append(p.color).append(',')
+                    .append(trimDouble(p.stamina))
                     .append(']');
         }
         builder.append("],\"b\":[")
@@ -42,10 +46,13 @@ public final class GameStateJson {
                 .append(state.goalScored)
                 .append(",\"foul\":")
                 .append(state.foul)
-                .append(",\"powerUps\":[");
+                .append(",\"phase\":\"")
+                .append(state.matchPhase != null ? state.matchPhase : "")
+                .append("\",\"powerUps\":[");
         for (int i = 0; i < state.powerUps.size(); i++) {
             PowerUpState p = state.powerUps.get(i);
-            if (i > 0) builder.append(',');
+            if (i > 0)
+                builder.append(',');
             builder.append('[')
                     .append(trimDouble(p.x)).append(',')
                     .append(trimDouble(p.y)).append(',')
@@ -71,7 +78,8 @@ public final class GameStateJson {
         double[] bars = parseNumberArray(trimmed, "\"bars\":[", "],\"scores\"");
         double[] scores = parseNumberArray(trimmed, "\"scores\":[", "],\"goal\"");
         boolean goal = parseBoolean(trimmed, "\"goal\":", ",\"foul\"");
-        boolean foul = parseBoolean(trimmed, "\"foul\":", ",\"powerUps\"");
+        boolean foul = parseBoolean(trimmed, "\"foul\":", ",\"phase\"");
+        String matchPhase = parseString(trimmed, "\"phase\":\"", "\",\"powerUps\"");
         List<PowerUpState> powerUps = parsePowerUps(trimmed);
 
         return new State(
@@ -86,8 +94,8 @@ public final class GameStateJson {
                 scores.length > 1 ? (int) scores[1] : 0,
                 goal,
                 foul,
-                powerUps
-        );
+                matchPhase,
+                powerUps);
     }
 
     private static PlayerState[] parsePlayers(String json) {
@@ -99,17 +107,20 @@ public final class GameStateJson {
         int idx = 0;
         while (idx < segment.length()) {
             int start = segment.indexOf('[', idx);
-            if (start == -1) break;
+            if (start == -1)
+                break;
             int end = findClosingBracket(segment, start);
-            if (end == -1) break;
+            if (end == -1)
+                break;
             String body = segment.substring(start + 1, end);
             String[] parts = body.split(",");
-            if (parts.length >= 4) {
+            if (parts.length >= 5) {
                 double x = Double.parseDouble(parts[0]);
                 double y = Double.parseDouble(parts[1]);
                 boolean facing = Boolean.parseBoolean(parts[2]);
                 int color = Integer.parseInt(parts[3]);
-                result.add(new PlayerState(x, y, facing, color));
+                double stamina = Double.parseDouble(parts[4]);
+                result.add(new PlayerState(x, y, facing, color, stamina));
             }
             idx = end + 1;
         }
@@ -137,6 +148,10 @@ public final class GameStateJson {
         return Boolean.parseBoolean(value);
     }
 
+    private static String parseString(String json, String startToken, String endToken) {
+        return slice(json, startToken, endToken);
+    }
+
     private static List<PowerUpState> parsePowerUps(String json) {
         int start = json.indexOf("\"powerUps\":[");
         if (start == -1) {
@@ -155,9 +170,11 @@ public final class GameStateJson {
         int idx = 0;
         while (idx < segment.length()) {
             int open = segment.indexOf('[', idx);
-            if (open == -1) break;
+            if (open == -1)
+                break;
             int close = findClosingBracket(segment, open);
-            if (close == -1) break;
+            if (close == -1)
+                break;
             String body = segment.substring(open + 1, close);
             String[] parts = body.split(",");
             if (parts.length >= 4) {
@@ -189,7 +206,8 @@ public final class GameStateJson {
         int depth = 0;
         for (int i = openIndex; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c == '[') depth++;
+            if (c == '[')
+                depth++;
             else if (c == ']') {
                 depth--;
                 if (depth == 0) {
@@ -219,20 +237,22 @@ public final class GameStateJson {
         public final int rightScore;
         public final boolean goalScored;
         public final boolean foul;
+        public final String matchPhase;
         public final List<PowerUpState> powerUps;
 
         public State(PlayerState[] players,
-                     double ballX,
-                     double ballY,
-                     int effectCode,
-                     double leftBarWidth,
-                     double rightBarWidth,
-                     double rightBarX,
-                     int leftScore,
-                     int rightScore,
-                     boolean goalScored,
-                     boolean foul,
-                     List<PowerUpState> powerUps) {
+                double ballX,
+                double ballY,
+                int effectCode,
+                double leftBarWidth,
+                double rightBarWidth,
+                double rightBarX,
+                int leftScore,
+                int rightScore,
+                boolean goalScored,
+                boolean foul,
+                String matchPhase,
+                List<PowerUpState> powerUps) {
             this.players = players;
             this.ballX = ballX;
             this.ballY = ballY;
@@ -244,6 +264,7 @@ public final class GameStateJson {
             this.rightScore = rightScore;
             this.goalScored = goalScored;
             this.foul = foul;
+            this.matchPhase = matchPhase != null ? matchPhase : "";
             this.powerUps = powerUps != null ? powerUps : Collections.emptyList();
         }
     }
@@ -253,12 +274,14 @@ public final class GameStateJson {
         public final double y;
         public final boolean facingRight;
         public final int color;
+        public final double stamina;
 
-        public PlayerState(double x, double y, boolean facingRight, int color) {
+        public PlayerState(double x, double y, boolean facingRight, int color, double stamina) {
             this.x = x;
             this.y = y;
             this.facingRight = facingRight;
             this.color = color;
+            this.stamina = stamina;
         }
     }
 
@@ -276,4 +299,3 @@ public final class GameStateJson {
         }
     }
 }
-
