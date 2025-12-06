@@ -26,6 +26,12 @@ import server.strategy.BallPhysicsStrategies;
 import server.template.AbstractMatchController;
 import server.template.StandardMatchController;
 
+
+import server.chat.ChatMediator;
+import server.chat.GameChatMediator;
+import common.chat.ChatInterpreter;
+import common.chat.ExampleChatInterpreter;
+
 public class SlimeSoccer {
     Window window;
     Slime player1, player2, player3, player4, smile;
@@ -52,6 +58,11 @@ public class SlimeSoccer {
     // throttle server painting to reduce CPU/GPU
     private static final long PAINT_INTERVAL_NS = 16_666_667L; // ~60 FPS
     private long lastPaintNs = 0;
+    private final boolean[] slotTaken = new boolean[5];
+    private final String[] slotNicknames = new String[5];
+    private final ChatMediator chatMediator;
+
+
 
     // Power-ups
     PowerUpManager powerUps;
@@ -64,12 +75,51 @@ public class SlimeSoccer {
         this(GameConfiguration.builder().build());
     }
 
+    public Slime getSlimeForSlot(int slot)
+    {
+        switch (slot) {
+            case 1: return player1;
+            case 2: return player2;
+            case 3: return player3;
+            case 4: return player4;
+            default: return null;
+        }
+    }
+
+    public void setNicknameForSlot(int slot, String nickname) {
+        if (slot < 1 || slot > 4) return;
+        slotNicknames[slot] = (nickname != null) ? nickname : "";
+
+        Slime s = getSlimeForSlot(slot);
+        if (s != null) {
+            s.setNickname(slotNicknames[slot]);
+        }
+    }
+
+    private void restoreNicknames() {
+        for (int slot = 1; slot <= 4; slot++) {
+            String n = slotNicknames[slot];
+            if (n != null && !n.isEmpty()) {
+                Slime s = getSlimeForSlot(slot);
+                if (s != null) {
+                    s.setNickname(n);
+                }
+            }
+        }
+    }
+
+
     public SlimeSoccer(GameConfiguration configuration) {
         this.configuration = Objects.requireNonNull(configuration, "configuration");
 
         // Initialize game objects BEFORE showing the window to avoid nulls on first
         // paint
         init();
+
+        ChatInterpreter interpreter = new ExampleChatInterpreter(); // replace with real later
+        this.chatMediator = new GameChatMediator(interpreter);
+
+        slotTaken[1] = true;
 
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
@@ -176,7 +226,45 @@ public class SlimeSoccer {
         world.addPlayer(player4, false);
         world.setBall(ball);
         participants = world.getParticipants();
+        restoreNicknames();
     }
+
+    public synchronized int assignSlotForTeam(server.model.TeamSide requestedSide) {
+        if (requestedSide == server.model.TeamSide.LEFT) {
+            if (!slotTaken[2]) {
+                slotTaken[2] = true;
+                return 2;
+            }
+        } else {
+            if (!slotTaken[3]) {
+                slotTaken[3] = true;
+                return 3;
+            }
+            if (!slotTaken[4]) {
+                slotTaken[4] = true;
+                return 4;
+            }
+        }
+
+        // Fallback: any free slot 2–4
+        for (int i = 2; i <= 4; i++) {
+            if (!slotTaken[i]) {
+                slotTaken[i] = true;
+                return i;
+            }
+        }
+
+        // No free slots
+        return -1;
+    }
+
+    /** Optional: free a slot when client disconnects */
+    public synchronized void freeSlot(int playerNumber) {
+        if (playerNumber >= 1 && playerNumber <= 4) {
+            slotTaken[playerNumber] = false;
+        }
+    }
+
 
     public void draw(Graphics g) {
         background.draw(g);
@@ -440,13 +528,13 @@ public class SlimeSoccer {
 
         GameStateJson.PlayerState[] players = new GameStateJson.PlayerState[] {
                 new GameStateJson.PlayerState(player1.getX(), player1.getY(), player1.isFacingRight(),
-                        player1.getColor().getRGB(), player1.getStamina()),
+                        player1.getColor().getRGB(), player1.getStamina(), player1.getNickname()),
                 new GameStateJson.PlayerState(player2.getX(), player2.getY(), player2.isFacingRight(),
-                        player2.getColor().getRGB(), player2.getStamina()),
+                        player2.getColor().getRGB(), player2.getStamina(), player2.getNickname()),
                 new GameStateJson.PlayerState(player3.getX(), player3.getY(), player3.isFacingRight(),
-                        player3.getColor().getRGB(), player3.getStamina()),
+                        player3.getColor().getRGB(), player3.getStamina(), player3.getNickname()),
                 new GameStateJson.PlayerState(player4.getX(), player4.getY(), player4.isFacingRight(),
-                        player4.getColor().getRGB(), player4.getStamina())
+                        player4.getColor().getRGB(), player4.getStamina(),player4.getNickname())
         };
 
         List<GameStateJson.PowerUpState> powerStates = new ArrayList<>(visiblePowerUps.size());
@@ -486,4 +574,5 @@ public class SlimeSoccer {
     public GameConfiguration getConfiguration() {
         return configuration;
     }
+    public ChatMediator getChatMediator() {return chatMediator;}
 }

@@ -13,6 +13,7 @@ public class World implements Iterable<Slime> {
     private final MatchParticipants participants;
     private Ball ball;
 
+
     public World() {
         this.allPlayers = new ArrayList<>();
         this.leftTeam = new Team("Left Team");
@@ -24,9 +25,15 @@ public class World implements Iterable<Slime> {
         allPlayers.add(player);
         if (isLeftTeam) {
             leftTeam.addPlayer(player);
+            player.setTeamSide(TeamSide.LEFT);
         } else {
             rightTeam.addPlayer(player);
+            player.setTeamSide(TeamSide.RIGHT);
         }
+    }
+
+    public void addPlayer(Slime player, TeamSide side) {
+        addPlayer(player, side == TeamSide.LEFT);
     }
 
     public void setBall(Ball ball) {

@@ -35,6 +35,13 @@ public class GameInfoReceiverRunnable implements Runnable {
                 if (line == null || line.isEmpty()) {
                     continue;
                 }
+
+                if (line.startsWith("CHAT|")) {
+                    handleChatLine(line, gameData);
+                    continue; // don't try to decode as JSON
+                }
+
+
                 GameStateJson.State state;
                 try {
                     state = GameStateJson.decode(line);
@@ -51,6 +58,7 @@ public class GameInfoReceiverRunnable implements Runnable {
                     builder.withPlayerPosition(i, (float) p.x, (float) p.y, p.facingRight);
                     builder.withPlayerColor(i, new Color(p.color, true));
                     builder.withPlayerStamina(i, (float) p.stamina);
+                    builder.withPlayerName(i, p.nickname);          // NEW LINE
                 }
 
                 builder.withBall((float) state.ballX, (float) state.ballY);
@@ -71,6 +79,22 @@ public class GameInfoReceiverRunnable implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+
+    private void handleChatLine(String line, GameData gameData) {
+        // Format: CHAT|scope|team|sender|text
+        String[] parts = line.split("\\|", 5);
+        if (parts.length < 5) {
+            return; // malformed
+        }
+
+        String scope  = parts[1]; // "TEAM"/"GLOBAL"
+        String team   = parts[2]; // "LEFT"/"RIGHT"
+        String sender = parts[3];
+        String text   = parts[4];
+
+        gameData.addChatMessage(scope, team, sender, text);
     }
 
 }

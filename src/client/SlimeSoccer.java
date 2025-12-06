@@ -44,6 +44,7 @@ public class SlimeSoccer {
     private final Drawable ballDrawable;
     Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
     Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
+    Font nameFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 20);
 
     public SlimeSoccer() {
         this(promptConfiguration());
@@ -51,9 +52,17 @@ public class SlimeSoccer {
 
     public SlimeSoccer(GameConfiguration configuration) {
         this.configuration = configuration != null ? configuration : GameConfiguration.builder().build();
+
+        baseBallDrawable = new BasicBallDrawable(20);
+        colorBallDecorator = new EffectColorBallDecorator(baseBallDrawable);
+        trailBallDecorator = new TrailGlowBallDecorator(colorBallDecorator);
+        safeZoneBallDecorator = new SafeZoneBallDecorator(trailBallDecorator, (int) (0.814 * BASE_HEIGHT));
+        ballDrawable = safeZoneBallDecorator;
+
         window = new ClientWindow(this);
         try {
             socket = new Socket(this.configuration.getHost(), this.configuration.getPort());
+            os = new PrintStream(socket.getOutputStream());
         } catch (UnknownHostException e) {
             e.printStackTrace();
             System.exit(-1);
@@ -61,11 +70,19 @@ public class SlimeSoccer {
             e.printStackTrace();
             System.exit(-1);
         }
-        baseBallDrawable = new BasicBallDrawable(20);
-        colorBallDecorator = new EffectColorBallDecorator(baseBallDrawable);
-        trailBallDecorator = new TrailGlowBallDecorator(colorBallDecorator);
-        safeZoneBallDecorator = new SafeZoneBallDecorator(trailBallDecorator, (int) (0.814 * BASE_HEIGHT));
-        ballDrawable = safeZoneBallDecorator;
+
+        String teamChoice = promptTeamChoice(); // "LEFT" or "RIGHT"
+        String nickname   = promptNickname();      // text
+        if (nickname == null || nickname.trim().isEmpty()) {
+            nickname = "Player";
+        }
+
+
+
+        os.println("JOIN " + teamChoice + " " + nickname.trim());
+        os.flush();
+
+
         new Thread(new GameInfoReceiverRunnable(socket)).start();
         try {
             os = new PrintStream(socket.getOutputStream());
@@ -87,8 +104,42 @@ public class SlimeSoccer {
                     gameData.isLeftPressed(),
                     gameData.isRightPressed());
             os.println(payload);
+
+            GameData.OutgoingChat oc = gameData.consumeOutgoingChat();
+            if (oc != null) {
+                String line = "CHAT:" + oc.scope + "|" + oc.text;
+                os.println(line);
+            }
         }
     }
+
+    private String promptTeamChoice() {
+        String[] options = {"LEFT", "RIGHT"};
+        String choice = (String) JOptionPane.showInputDialog(
+                null,
+                "Choose your team:",
+                "Team Selection",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (choice == null) {
+            // user cancelled: default to LEFT
+            return "LEFT";
+        }
+        return choice.toUpperCase();
+    }
+
+    private String promptNickname() {
+        return JOptionPane.showInputDialog(
+                null,
+                "Enter your nickname:",
+                "Nickname",
+                JOptionPane.PLAIN_MESSAGE);
+    }
+
+
 
     private static GameConfiguration promptConfiguration() {
         String hostNameInput = JOptionPane.showInputDialog("Enter hostname");
@@ -163,6 +214,7 @@ public class SlimeSoccer {
         }
 
         drawAbilityHud(g, gameData);
+        g.setFont(nameFont);
 
         // Draw stamina bars for each player
         drawStaminaBar(g, 1, gameData);
@@ -172,6 +224,49 @@ public class SlimeSoccer {
 
         // Draw match phase overlay if present
         drawMatchPhaseOverlay(g, gameData);
+
+        drawChatOverlay(g,gameData);
+    }
+
+    private void drawChatOverlay(Graphics2D g, GameData gameData) {
+
+        int boxX = 20;
+        int boxY = 600;   // near bottom-left
+        int boxWidth = 600;
+        int lineHeight = 20;
+        int maxLines = 8;
+
+        g.setColor(new Color(0, 0, 0, 150)); // semi-transparent black
+        g.fillRect(boxX - 10, boxY - 10, boxWidth, lineHeight * (maxLines + 2));
+
+        java.util.List<GameData.ChatEntry> log = gameData.getChatLogSnapshot();
+        int start = Math.max(0, log.size() - maxLines);
+        int y = boxY;
+
+        g.setFont(new Font("Arial", Font.PLAIN, 16));
+
+        for (int i = start; i < log.size(); i++) {
+            GameData.ChatEntry e = log.get(i);
+            String prefix = "[" + e.scope + "] ";
+            String line = prefix + e.sender + ": " + e.text;
+
+            g.setColor(Color.WHITE);
+            g.drawString(line, boxX, y);
+            y += lineHeight;
+        }
+
+        // Input line if chat is active
+        if (gameData.isChatInputActive()) {
+            String scopeLabel = gameData.getCurrentChatScopeLabel(); // TEAM / GLOBAL
+            String text = gameData.getCurrentChatInput();
+
+            g.setColor(new Color(0, 0, 0, 200));
+            g.fillRect(boxX - 10, y, boxWidth, lineHeight + 10);
+
+            g.setColor(Color.YELLOW);
+            String inputLine = "[" + scopeLabel + "] " + text + "_";
+            g.drawString(inputLine, boxX, y + lineHeight);
+        }
     }
 
     public void drawSlime(Graphics g, int playerIndex, int radius) {
@@ -305,6 +400,28 @@ public class SlimeSoccer {
         // Border
         g.setColor(Color.WHITE);
         g.drawRect(barX, barY, barWidth, barHeight);
+
+        String name = "";
+        switch (playerIndex) {
+            case 1:
+                name = gameData.getP1Name();
+                break;
+            case 2:
+                name = gameData.getP2Name();
+                break;
+            case 3:
+                name = gameData.getP3Name();
+                break;
+            case 4:
+                name = gameData.getP4Name();
+                break;
+        }
+        if (name != null && !name.isEmpty()) {
+            int textWidth = g.getFontMetrics().stringWidth(name);
+            int textX = barX + (barWidth - textWidth) / 2;
+            int textY = barY - 5; // slightly above the bar
+            g.drawString(name, textX, textY);
+        }
     }
 
     /**

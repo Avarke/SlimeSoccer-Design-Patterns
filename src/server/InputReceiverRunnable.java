@@ -1,5 +1,7 @@
 package server;
 
+import common.chat.ChatMessage;
+import common.chat.ChatScope;
 import common.net.InputJson;
 
 import java.io.BufferedReader;
@@ -13,11 +15,15 @@ public class InputReceiverRunnable implements Runnable {
     Socket socket;
     BufferedReader reader;
     int playerNumber;
+    ClientData clientData;
 
-    public InputReceiverRunnable( SlimeSoccer newSlimeSoccer, int newPlayerNumber, Socket newSocket ){
+    public InputReceiverRunnable(SlimeSoccer newSlimeSoccer,
+                                 int newPlayerNumber,
+                                 Socket newSocket, ClientData clientData) {
         slimeSoccer = newSlimeSoccer;
         playerNumber = newPlayerNumber;
         socket = newSocket;
+        this.clientData = clientData;
     }
 
     public void run() {
@@ -30,6 +36,12 @@ public class InputReceiverRunnable implements Runnable {
             try {
                 String line = reader.readLine();
                 if (line == null) {
+                    slimeSoccer.freeSlot(playerNumber);
+                    slimeSoccer.getChatMediator().removeParticipant(clientData);
+                    break;
+                }
+                if (line.startsWith("CHAT:")) {
+                    handleChat(line.substring(5)); // remove "CHAT:"
                     continue;
                 }
                 try {
@@ -57,8 +69,34 @@ public class InputReceiverRunnable implements Runnable {
                     e.printStackTrace();
                 }
             } catch (IOException e) {
+                slimeSoccer.freeSlot(playerNumber);
                 e.printStackTrace();
+                break;
             }
         }
+    }
+
+
+    private void handleChat(String payload) {
+        // Expect something like: "TEAM|hello there" or "GLOBAL|hello"
+        String trimmed = payload.trim();
+        int sep = trimmed.indexOf('|');
+        if (sep <= 0) return;
+
+        String scopeStr = trimmed.substring(0, sep).toUpperCase();
+        String text = trimmed.substring(sep + 1).trim();
+
+        ChatScope scope = ChatScope.valueOf(scopeStr);
+
+        ChatMessage msg = new ChatMessage(
+                clientData.getNickname(),   // sender nickname
+                clientData.getTeam(),       // sender team ("LEFT"/"RIGHT")
+                scope,
+                text,
+                System.currentTimeMillis()
+        );
+
+        // SENDER → MEDIATOR (with processor & recipients behind it)
+        slimeSoccer.getChatMediator().sendMessage(msg);
     }
 }

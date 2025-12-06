@@ -13,6 +13,10 @@ public class Slime {
     private server.state.PlayerState currentState;
     private double stamina;
 
+    private server.model.TeamSide teamSide;
+    private String nickname;
+
+
     public Slime(double x, double y, Color color, boolean isFacingRight) {
         this.x = x;
         this.y = y;
@@ -25,9 +29,12 @@ public class Slime {
         eyeX = isFacingRight ? x + 0.467 * radius : x - 0.467 * radius;
         eyeY = y - 0.467 * radius;
 
+
         // Initialize with fresh state and full stamina
         this.stamina = 100.0;
         this.currentState = new server.state.FreshState();
+        this.teamSide = null;
+        this.nickname = "";
     }
 
     public void draw(Graphics g, double ballX, double ballY) {
@@ -126,6 +133,18 @@ public class Slime {
         // Apply speed multiplier from current state
         this.velX = velX * (currentState != null ? currentState.getSpeedMultiplier() : 1.0);
     }
+
+    public server.model.TeamSide getTeamSide() {
+        return teamSide;
+    }
+
+    public void setTeamSide(server.model.TeamSide teamSide) {
+        this.teamSide = teamSide;
+    }
+
+    public String getNickname() {return nickname;}
+
+    public void setNickname(String nickname) {this.nickname = nickname != null ? nickname : "";}
 
     public double getVelY() {
         return velY;

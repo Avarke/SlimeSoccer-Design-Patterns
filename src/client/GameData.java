@@ -2,7 +2,9 @@ package client;
 
 import java.awt.Color;
 import java.io.ObjectStreamException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class GameData {
@@ -46,6 +48,11 @@ public final class GameData {
     private float p4Stamina = 100f;
     private String matchPhase = "";
 
+    private String p1Name = "";
+    private String p2Name = "";
+    private String p3Name = "";
+    private String p4Name = "";
+
     private final CopyOnWriteArrayList<GameObserver> observers = new CopyOnWriteArrayList<>();
 
     private GameData() {
@@ -78,6 +85,47 @@ public final class GameData {
             o.onGameDataChanged(this);
         }
     }
+
+
+    // chat thingzzz
+
+    public static class ChatEntry {
+        public final String scope;  // "TEAM" / "GLOBAL"
+        public final String team;   // "LEFT"/"RIGHT"
+        public final String sender;
+        public final String text;
+
+        public ChatEntry(String scope, String team, String sender, String text) {
+            this.scope = scope;
+            this.team = team;
+            this.sender = sender;
+            this.text = text;
+        }
+    }
+
+    private final List<ChatEntry> chatLog = new ArrayList<>();
+
+    private boolean chatInputActive = false;
+    private boolean chatTeamScope = true; // true = TEAM, false = GLOBAL
+    private final StringBuilder chatInputBuffer = new StringBuilder();
+
+    private boolean outgoingChatReady = false;
+    private String outgoingChatText;
+    private String outgoingChatScope; // "TEAM" / "GLOBAL"
+
+    // Player nicknames
+    public String getP1Name() { return p1Name; }
+    public String getP2Name() { return p2Name; }
+    public String getP3Name() { return p3Name; }
+    public String getP4Name() { return p4Name; }
+
+    public void setP1Name(String n) { p1Name = n; }
+    public void setP2Name(String n) { p2Name = n; }
+    public void setP3Name(String n) { p3Name = n; }
+    public void setP4Name(String n) { p4Name = n; }
+
+
+
 
     // --- Player positions ---
     public synchronized float getP1PosX() {
@@ -361,6 +409,94 @@ public final class GameData {
         this.matchPhase = matchPhase;
     }
 
+
+
+    public synchronized void addChatMessage(String scope, String team, String sender, String text) {
+        chatLog.add(new ChatEntry(scope, team, sender, text));
+        // limit history to last 50 messages
+        if (chatLog.size() > 50) {
+            chatLog.remove(0);
+        }
+        notifyObservers();
+    }
+
+    public synchronized List<ChatEntry> getChatLogSnapshot() {
+        return new ArrayList<>(chatLog);
+    }
+
+    // --- Chat: input state ---
+
+    public synchronized void openChatInput() {
+        chatInputActive = true;
+        chatInputBuffer.setLength(0); // clear
+    }
+
+    public synchronized void closeChatInput() {
+        chatInputActive = false;
+        chatInputBuffer.setLength(0);
+    }
+
+    public synchronized boolean isChatInputActive() {
+        return chatInputActive;
+    }
+
+    public synchronized void toggleChatScope() {
+        chatTeamScope = !chatTeamScope;
+    }
+
+    public synchronized String getCurrentChatScopeLabel() {
+        return chatTeamScope ? "TEAM" : "GLOBAL";
+    }
+
+    public synchronized void appendChatChar(char c) {
+        chatInputBuffer.append(c);
+    }
+
+    public synchronized void backspaceChatChar() {
+        int len = chatInputBuffer.length();
+        if (len > 0) {
+            chatInputBuffer.deleteCharAt(len - 1);
+        }
+    }
+
+    public synchronized String getCurrentChatInput() {
+        return chatInputBuffer.toString();
+    }
+
+    // --- Chat: outgoing to server ---
+
+    public static class OutgoingChat {
+        public final String scope;
+        public final String text;
+        public OutgoingChat(String scope, String text) {
+            this.scope = scope;
+            this.text = text;
+        }
+    }
+
+    public synchronized void submitChat() {
+        String text = chatInputBuffer.toString().trim();
+        if (text.isEmpty()) {
+            closeChatInput();
+            return;
+        }
+        outgoingChatScope = chatTeamScope ? "TEAM" : "GLOBAL";
+        outgoingChatText = text;
+        outgoingChatReady = true;
+        // keep input open or close; here we close:
+        closeChatInput();
+    }
+
+    public synchronized OutgoingChat consumeOutgoingChat() {
+        if (!outgoingChatReady) return null;
+        OutgoingChat oc = new OutgoingChat(outgoingChatScope, outgoingChatText);
+        outgoingChatReady = false;
+        outgoingChatText = null;
+        outgoingChatScope = null;
+        return oc;
+    }
+
+
     public synchronized PowerUpSnapshot getPowerUpSnapshot() {
         return new PowerUpSnapshot(
                 Arrays.copyOf(powerUpXs, powerUpCount),
@@ -397,6 +533,11 @@ public final class GameData {
             this.p2Stamina = snapshot.stamina[1];
             this.p3Stamina = snapshot.stamina[2];
             this.p4Stamina = snapshot.stamina[3];
+
+            this.p1Name = snapshot.getPlayerName(0);
+            this.p2Name = snapshot.getPlayerName(1);
+            this.p3Name = snapshot.getPlayerName(2);
+            this.p4Name = snapshot.getPlayerName(3);
 
             this.ballPosX = snapshot.ballPosX;
             this.ballPosY = snapshot.ballPosY;
@@ -447,6 +588,8 @@ public final class GameData {
         private final float[] powerUpRadii;
         private final int[] powerUpColors;
         private final int powerUpCount;
+        private final String[] names;
+
 
         private Snapshot(SnapshotBuilder builder) {
             this.posX = Arrays.copyOf(builder.posX, builder.posX.length);
@@ -470,6 +613,13 @@ public final class GameData {
             this.powerUpYs = Arrays.copyOf(builder.powerUpYs, builder.powerUpCount);
             this.powerUpRadii = Arrays.copyOf(builder.powerUpRadii, builder.powerUpCount);
             this.powerUpColors = Arrays.copyOf(builder.powerUpColors, builder.powerUpCount);
+            this.names = Arrays.copyOf(builder.names, builder.names.length);
+        }
+
+        public String getPlayerName(int index) {
+            if (index < 0 || index >= names.length) return "";
+            String n = names[index];
+            return (n != null) ? n : "";
         }
     }
 
@@ -495,11 +645,18 @@ public final class GameData {
         private float[] powerUpRadii = new float[0];
         private int[] powerUpColors = new int[0];
         private int powerUpCount;
+        private final String[] names = new String[4];
+
 
         public SnapshotBuilder withPlayer(int index, float x, float y, boolean isFacingRight, Color color,
                 float staminaVal) {
             return withPlayerPosition(index, x, y, isFacingRight).withPlayerColor(index, color).withPlayerStamina(index,
                     staminaVal);
+        }
+        public SnapshotBuilder withPlayerName(int index, String name) {
+            checkIndex(index);
+            names[index] = (name != null) ? name : "";
+            return this;
         }
 
         public SnapshotBuilder withPlayerPosition(int index, float x, float y, boolean isFacingRight) {
@@ -604,4 +761,12 @@ public final class GameData {
             this.count = xs.length;
         }
     }
+
+
+
+
+
+
+
+
 }
