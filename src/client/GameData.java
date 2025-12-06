@@ -108,6 +108,7 @@ public final class GameData {
     private boolean chatInputActive = false;
     private boolean chatTeamScope = true; // true = TEAM, false = GLOBAL
     private final StringBuilder chatInputBuffer = new StringBuilder();
+    private int chatScrollOffset = 0; // 0 = showing latest messages
 
     private boolean outgoingChatReady = false;
     private String outgoingChatText;
@@ -413,9 +414,13 @@ public final class GameData {
 
     public synchronized void addChatMessage(String scope, String team, String sender, String text) {
         chatLog.add(new ChatEntry(scope, team, sender, text));
-        // limit history to last 50 messages
-        if (chatLog.size() > 50) {
+        // limit history to last 30 messages
+        if (chatLog.size() > 30) {
             chatLog.remove(0);
+        }
+        // Reset scroll to bottom when new message arrives (if we were at bottom)
+        if (chatScrollOffset == 0) {
+            chatScrollOffset = 0;
         }
         notifyObservers();
     }
@@ -494,6 +499,25 @@ public final class GameData {
         outgoingChatText = null;
         outgoingChatScope = null;
         return oc;
+    }
+
+    // --- Chat: scrolling ---
+
+    public synchronized void scrollChatUp(int lines) {
+        chatScrollOffset = Math.min(chatScrollOffset + lines, chatLog.size() - 1);
+        if (chatScrollOffset < 0) chatScrollOffset = 0;
+    }
+
+    public synchronized void scrollChatDown(int lines) {
+        chatScrollOffset = Math.max(chatScrollOffset - lines, 0);
+    }
+
+    public synchronized int getChatScrollOffset() {
+        return chatScrollOffset;
+    }
+
+    public synchronized void resetChatScroll() {
+        chatScrollOffset = 0;
     }
 
 

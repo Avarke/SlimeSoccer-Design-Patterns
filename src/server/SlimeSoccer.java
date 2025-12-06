@@ -31,6 +31,8 @@ import server.chat.ChatMediator;
 import server.chat.GameChatMediator;
 import common.chat.ChatInterpreter;
 import common.chat.ExampleChatInterpreter;
+import server.Interpreter.ReportCommand;
+import server.Visitor.GameReportVisitor;
 
 public class SlimeSoccer {
     Window window;
@@ -348,6 +350,9 @@ public class SlimeSoccer {
         // Delta time for physics (16ms ~= 0.016 seconds per frame at 60 FPS)
         double deltaTime = 0.016;
 
+        // Get the report visitor for statistics tracking
+        GameReportVisitor reportVisitor = ReportCommand.getReportVisitor();
+
         // Update player states (stamina management) using iterator
         world.updateAll(deltaTime);
 
@@ -355,6 +360,8 @@ public class SlimeSoccer {
         for (Slime player : participants) {
             player.setX(player.getX() + player.getVelX());
             player.updateEyes();
+            // Track player activity with visitor
+            player.accept(reportVisitor);
         }
 
         for (Slime player : participants) {
@@ -363,8 +370,16 @@ public class SlimeSoccer {
 
         controls();
 
-        if (powerUps != null)
+        if (powerUps != null) {
             powerUps.update(ball, player1, player2, player3, player4);
+            // Track power-up usage
+            for (PowerUp powerUp : powerUps.getVisiblePowerUps()) {
+                powerUp.accept(reportVisitor);
+            }
+        }
+
+        // Track ball movement
+        ball.accept(reportVisitor);
 
         if (ball.getY() >= leftGoal.getY() &&
                 (ball.getX() <= leftGoal.getX() + leftGoal.getWidth() || ball.getX() >= rightGoal.getX())) {
@@ -470,6 +485,8 @@ public class SlimeSoccer {
             foul = true;
             goalScored = false;
             runGame = false;
+            ReportCommand.incrementFouls();
+            ReportCommand.updateScores(player1Score, player2Score);
             if (autoResetAtMs == 0)
                 autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
@@ -479,6 +496,8 @@ public class SlimeSoccer {
             foul = true;
             goalScored = false;
             runGame = false;
+            ReportCommand.incrementFouls();
+            ReportCommand.updateScores(player1Score, player2Score);
             if (autoResetAtMs == 0)
                 autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
@@ -496,6 +515,7 @@ public class SlimeSoccer {
             goalScored = true;
             foul = false;
             runGame = false;
+            ReportCommand.updateScores(player1Score, player2Score);
             if (autoResetAtMs == 0)
                 autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
@@ -505,6 +525,7 @@ public class SlimeSoccer {
             goalScored = true;
             foul = false;
             runGame = false;
+            ReportCommand.updateScores(player1Score, player2Score);
             if (autoResetAtMs == 0)
                 autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
@@ -520,6 +541,8 @@ public class SlimeSoccer {
         autoResetAtMs = 0;
         if (powerUps != null)
             powerUps.clearAll(ball);
+        // Reset visitor statistics when game resets
+        ReportCommand.resetStats();
     }
 
     public void sendData() {

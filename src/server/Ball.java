@@ -5,8 +5,10 @@ import java.awt.Graphics;
 
 import server.strategy.BallPhysicsStrategy;
 import server.strategy.BallPhysicsStrategies;
+import server.Visitor.GameElement;
+import server.Visitor.GameElementVisitor;
 
-public class Ball {
+public class Ball implements GameElement {
     private double x, y, lowBound, rightBound, leftCBarX, rightCBarX, cBarY;
     private double radius;
     private Color color;
@@ -98,6 +100,11 @@ public class Ball {
         clone.setVelY(velY);
         clone.setPhysicsStrategy(getPhysicsStrategy());
         return clone;
+    }
+
+    @Override
+    public void accept(GameElementVisitor visitor) {
+        visitor.visitBall(this);
     }
 
 }

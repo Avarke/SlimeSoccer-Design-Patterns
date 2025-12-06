@@ -2,8 +2,10 @@ package server;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import server.Visitor.GameElement;
+import server.Visitor.GameElementVisitor;
 
-public class Goal {
+public class Goal implements GameElement {
     private double x, y, xIntvl, yIntvl, height, width, netThickness, barThickness;
     private boolean isLeftGoal;
 
@@ -43,5 +45,10 @@ public class Goal {
     public double getWidth() { return width; }
     public double getHeight() { return height; }
     public double getBarThickness() { return barThickness; }
+
+    @Override
+    public void accept(GameElementVisitor visitor) {
+        visitor.visitGoal(this);
+    }
 
 }

@@ -9,10 +9,7 @@ import server.Goal;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Visitor that generates end-of-game reports by collecting statistics
- * from various game elements.
- */
+
 public class GameReportVisitor implements GameElementVisitor {
     private int ballTouches = 0;
     private int goalCount = 0;
@@ -20,7 +17,7 @@ public class GameReportVisitor implements GameElementVisitor {
     private Map<PowerUpType, Integer> powerUpUsage = new HashMap<>();
     private double totalBallDistance = 0;
     
-    // Track previous ball position for distance calculation
+    
     private Double lastBallX = null;
     private Double lastBallY = null;
     
@@ -28,7 +25,7 @@ public class GameReportVisitor implements GameElementVisitor {
     public void visitBall(Ball ball) {
         ballTouches++;
         
-        // Calculate distance traveled
+        
         if (lastBallX != null && lastBallY != null) {
             double dx = ball.getX() - lastBallX;
             double dy = ball.getY() - lastBallY;
@@ -60,25 +57,23 @@ public class GameReportVisitor implements GameElementVisitor {
         goalCount++;
     }
     
-    /**
-     * Generates a formatted report of collected statistics.
-     */
+   
     public String generateReport(int team1Score, int team2Score, int fouls) {
         StringBuilder report = new StringBuilder();
         report.append("===== GAME REPORT =====\n\n");
         
-        // Scores
+    
         report.append("FINAL SCORE:\n");
         report.append("  Team 1: ").append(team1Score).append("\n");
         report.append("  Team 2: ").append(team2Score).append("\n");
         report.append("  Fouls: ").append(fouls).append("\n\n");
         
-        // Ball statistics
+        
         report.append("BALL STATISTICS:\n");
         report.append("  Total distance traveled: ").append(String.format("%.2f", totalBallDistance)).append(" pixels\n");
         report.append("  Position updates: ").append(ballTouches).append("\n\n");
         
-        // Player statistics
+       
         if (!slimeStats.isEmpty()) {
             report.append("PLAYER ACTIVITY:\n");
             for (Map.Entry<String, Integer> entry : slimeStats.entrySet()) {
@@ -88,7 +83,7 @@ public class GameReportVisitor implements GameElementVisitor {
             report.append("\n");
         }
         
-        // PowerUp usage
+        
         if (!powerUpUsage.isEmpty()) {
             report.append("POWER-UP USAGE:\n");
             for (Map.Entry<PowerUpType, Integer> entry : powerUpUsage.entrySet()) {
@@ -106,9 +101,7 @@ public class GameReportVisitor implements GameElementVisitor {
         return report.toString();
     }
     
-    /**
-     * Resets all statistics to start a new report.
-     */
+   
     public void reset() {
         ballTouches = 0;
         goalCount = 0;
@@ -119,7 +112,7 @@ public class GameReportVisitor implements GameElementVisitor {
         lastBallY = null;
     }
     
-    // Getters for individual stats if needed
+   
     public int getBallTouches() { return ballTouches; }
     public int getGoalCount() { return goalCount; }
     public double getTotalBallDistance() { return totalBallDistance; }

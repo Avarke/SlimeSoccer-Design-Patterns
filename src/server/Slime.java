@@ -2,8 +2,10 @@ package server;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import server.Visitor.GameElement;
+import server.Visitor.GameElementVisitor;
 
-public class Slime {
+public class Slime implements GameElement {
     private double x, y, velX, velY, eyeX, eyeY;
     private static double radius, pupilSize, lowBound, jumpVel;
     private Color color;
@@ -191,5 +193,10 @@ public class Slime {
 
     public void increaseStamina(double amount) {
         setStamina(stamina + amount);
+    }
+
+    @Override
+    public void accept(GameElementVisitor visitor) {
+        visitor.visitSlime(this);
     }
 }

@@ -66,7 +66,10 @@ public class ClientData implements ChatParticipant {
 
     private String escape(String s) {
         if (s == null) return "";
-        // crude escaping; good enough for prototype
-        return s.replace("|", "\\|");
+        // Escape pipes and newlines for network transmission
+        return s.replace("\\", "\\\\")
+                .replace("|", "\\|")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 }

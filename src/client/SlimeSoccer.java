@@ -240,19 +240,44 @@ public class SlimeSoccer {
         g.fillRect(boxX - 10, boxY - 10, boxWidth, lineHeight * (maxLines + 2));
 
         java.util.List<GameData.ChatEntry> log = gameData.getChatLogSnapshot();
-        int start = Math.max(0, log.size() - maxLines);
-        int y = boxY;
-
+        int scrollOffset = gameData.getChatScrollOffset();
+        
         g.setFont(new Font("Arial", Font.PLAIN, 16));
 
-        for (int i = start; i < log.size(); i++) {
-            GameData.ChatEntry e = log.get(i);
+        // Expand all messages into individual lines first
+        java.util.List<String> allLines = new java.util.ArrayList<>();
+        for (GameData.ChatEntry e : log) {
             String prefix = "[" + e.scope + "] ";
-            String line = prefix + e.sender + ": " + e.text;
-
+            String[] textLines = e.text.split("\\n");
+            
+            for (int j = 0; j < textLines.length; j++) {
+                if (j == 0) {
+                    // First line with sender prefix
+                    allLines.add(prefix + e.sender + ": " + textLines[0]);
+                } else {
+                    // Subsequent lines indented
+                    allLines.add("  " + textLines[j]);
+                }
+            }
+        }
+        
+        // Calculate which lines to show based on scroll offset
+        int totalLines = allLines.size();
+        int endIndex = totalLines - scrollOffset; // Where to end (most recent visible line + 1)
+        int startIndex = Math.max(0, endIndex - maxLines); // Where to start
+        
+        // Draw the lines in view
+        int y = boxY;
+        for (int i = startIndex; i < endIndex && i < totalLines; i++) {
             g.setColor(Color.WHITE);
-            g.drawString(line, boxX, y);
+            g.drawString(allLines.get(i), boxX, y);
             y += lineHeight;
+        }
+        
+        // Show scroll indicator if not at bottom
+        if (scrollOffset > 0) {
+            g.setColor(Color.YELLOW);
+            g.drawString("▲ Scroll: " + scrollOffset + " lines up ▲", boxX + boxWidth - 200, boxY - 15);
         }
 
         // Input line if chat is active

@@ -5,8 +5,10 @@ import java.awt.Graphics;
 
 import server.strategy.BallPhysicsStrategies;
 import server.strategy.BallPhysicsStrategy;
+import server.Visitor.GameElement;
+import server.Visitor.GameElementVisitor;
 
-public class PowerUp implements Cloneable {
+public class PowerUp implements Cloneable, GameElement {
     private double x, y;
     private final int radius;
     private final PowerUpType type;
@@ -84,5 +86,9 @@ public class PowerUp implements Cloneable {
         return copy;
     }
 
+    @Override
+    public void accept(GameElementVisitor visitor) {
+        visitor.visitPowerUp(this);
+    }
 
 }

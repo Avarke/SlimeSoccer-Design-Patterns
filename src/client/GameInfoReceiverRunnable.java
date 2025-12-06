@@ -91,10 +91,21 @@ public class GameInfoReceiverRunnable implements Runnable {
 
         String scope  = parts[1]; // "TEAM"/"GLOBAL"
         String team   = parts[2]; // "LEFT"/"RIGHT"
-        String sender = parts[3];
-        String text   = parts[4];
+        String sender = unescape(parts[3]);
+        String text   = unescape(parts[4]);
 
         gameData.addChatMessage(scope, team, sender, text);
+    }
+
+    private String unescape(String s) {
+        if (s == null) return "";
+        // Unescape network transmission encoding
+        // IMPORTANT: Must unescape backslash FIRST to avoid double-unescaping
+        return s.replace("\\\\", "\0")  // Temporarily use null char
+                .replace("\\r", "\r")
+                .replace("\\n", "\n")
+                .replace("\\|", "|")
+                .replace("\0", "\\");   // Restore backslash
     }
 
 }
