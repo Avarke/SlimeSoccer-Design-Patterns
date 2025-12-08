@@ -1,6 +1,8 @@
 package client;
 
 import client.render.*;
+import client.ui.HudComposite;
+import client.ui.components.*;
 import common.GameConfiguration;
 
 import common.net.InputJson;
@@ -38,6 +40,7 @@ public class SlimeSoccer {
     private final SafeZoneBallDecorator safeZoneBallDecorator;
     private final Drawable ballDrawable;
     private final SlimeSprite slimeSprite;
+    private final HudComposite hudRoot;
 
     Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
     Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
@@ -59,6 +62,16 @@ public class SlimeSoccer {
 
         this.slimeSprite = SlimeSpriteFactory.getSprite(75);
 
+        // HUD COMPOSITE
+
+        hudRoot = new HudComposite();
+        hudRoot.addChild(new ScoreBoardComponent(scoreFont));
+        hudRoot.addChild(new FoulBarsComponent());
+        hudRoot.addChild(new StaminaBarsComponent());
+        hudRoot.addChild(new MatchPhaseComponent(BASE_WIDTH, BASE_HEIGHT,
+                new Font("Franklin Gothic Medium Italic", Font.BOLD, 120)));
+        hudRoot.addChild(new ChatOverlayComponent(this));
+        hudRoot.addChild(new GoalMessageComponent(goalFont));
 
         window = new ClientWindow(this);
         try {
@@ -218,42 +231,46 @@ public class SlimeSoccer {
         drawGoal(g, 0, (int) GOAL_Y, true);
         drawGoal(g, (int) RIGHT_GOAL_X, (int) GOAL_Y, false);
 
-        g.setColor(gameData.getP1Color());
-        g.fillRect(0, (int) FOUL_Y, (int) gameData.getP1FoulBarWidth(), 10);
+        // composite usage
+        hudRoot.update(gameData);
+        hudRoot.draw(g, gameData);
 
-        g.setColor(gameData.getP3Color());
-        g.fillRect((int) gameData.getP2FoulBarX(), (int) FOUL_Y, (int) gameData.getP2FoulBarWidth(), 10);
-
-        g.setFont(scoreFont);
-        g.setColor(Color.WHITE);
-        g.drawString(Integer.toString(gameData.getPlayer1Score()), 50, 100);
-        g.drawString(Integer.toString(gameData.getPlayer2Score()), 1700, 100);
-
-        if (gameData.isGoalScored()) {
-            g.setFont(goalFont);
-            g.drawString("GOAL!", 550, 300);
-        }
-        if (gameData.isFoul()) {
-            g.setFont(goalFont);
-            g.drawString("FOUL!", 550, 300);
-        }
-
-        drawAbilityHud(g, gameData);
-        g.setFont(nameFont);
-
-        // Draw stamina bars for each player
-        drawStaminaBar(g, 1, gameData);
-        drawStaminaBar(g, 2, gameData);
-        drawStaminaBar(g, 3, gameData);
-        drawStaminaBar(g, 4, gameData);
-
-        // Draw match phase overlay if present
-        drawMatchPhaseOverlay(g, gameData);
-
-        drawChatOverlay(g,gameData);
+//        g.setColor(gameData.getP1Color());
+//        g.fillRect(0, (int) FOUL_Y, (int) gameData.getP1FoulBarWidth(), 10);
+//
+//        g.setColor(gameData.getP3Color());
+//        g.fillRect((int) gameData.getP2FoulBarX(), (int) FOUL_Y, (int) gameData.getP2FoulBarWidth(), 10);
+//
+//        g.setFont(scoreFont);
+//        g.setColor(Color.WHITE);
+//        g.drawString(Integer.toString(gameData.getPlayer1Score()), 50, 100);
+//        g.drawString(Integer.toString(gameData.getPlayer2Score()), 1700, 100);
+//
+//        if (gameData.isGoalScored()) {
+//            g.setFont(goalFont);
+//            g.drawString("GOAL!", 550, 300);
+//        }
+//        if (gameData.isFoul()) {
+//            g.setFont(goalFont);
+//            g.drawString("FOUL!", 550, 300);
+//        }
+//
+//        drawAbilityHud(g, gameData);
+//        g.setFont(nameFont);
+//
+//        // Draw stamina bars for each player
+//        drawStaminaBar(g, 1, gameData);
+//        drawStaminaBar(g, 2, gameData);
+//        drawStaminaBar(g, 3, gameData);
+//        drawStaminaBar(g, 4, gameData);
+//
+//        // Draw match phase overlay if present
+//        drawMatchPhaseOverlay(g, gameData);
+//
+//        drawChatOverlay(g,gameData);
     }
 
-    private void drawChatOverlay(Graphics2D g, GameData gameData) {
+    public void drawChatOverlay(Graphics2D g, GameData gameData) {
 
         int boxX = 20;
         int boxY = 600;   // near bottom-left
