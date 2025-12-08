@@ -60,7 +60,6 @@ public class ClientData implements ChatParticipant {
                 .append(message.getSenderTeam()).append('|')
                 .append(escape(message.getSenderNickname())).append('|')
                 .append(escape(message.getText()));
-
         os.println(b.toString());
     }
 

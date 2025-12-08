@@ -1,14 +1,9 @@
 package client;
 
+import client.render.*;
 import common.GameConfiguration;
 
 import common.net.InputJson;
-
-import client.render.BasicBallDrawable;
-import client.render.Drawable;
-import client.render.EffectColorBallDecorator;
-import client.render.SafeZoneBallDecorator;
-import client.render.TrailGlowBallDecorator;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -42,6 +37,8 @@ public class SlimeSoccer {
     private final TrailGlowBallDecorator trailBallDecorator;
     private final SafeZoneBallDecorator safeZoneBallDecorator;
     private final Drawable ballDrawable;
+    private final SlimeSprite slimeSprite;
+
     Font scoreFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 80);
     Font goalFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 300);
     Font nameFont = new Font("Franklin Gothic Medium Italic", Font.PLAIN, 20);
@@ -58,6 +55,10 @@ public class SlimeSoccer {
         trailBallDecorator = new TrailGlowBallDecorator(colorBallDecorator);
         safeZoneBallDecorator = new SafeZoneBallDecorator(trailBallDecorator, (int) (0.814 * BASE_HEIGHT));
         ballDrawable = safeZoneBallDecorator;
+
+
+        this.slimeSprite = SlimeSpriteFactory.getSprite(75);
+
 
         window = new ClientWindow(this);
         try {
@@ -148,7 +149,12 @@ public class SlimeSoccer {
                 .build();
     }
 
+    private long frameCount = 0;
+    private long totalRenderNs = 0;
+
     public void draw(Graphics g) {
+
+
         GameData gameData = GameData.getInstance();
 
         Graphics2D g2 = (Graphics2D) g;
@@ -174,6 +180,10 @@ public class SlimeSoccer {
         scene.dispose();
     }
 
+
+    private long slimeFramesInWindow = 0;
+    private long slimeTotalNsInWindow = 0;
+
     private void renderScene(Graphics2D g, GameData gameData) {
         g.setColor(Color.BLUE);
         g.fillRect(0, 0, (int) BASE_WIDTH, (int) BASE_HEIGHT);
@@ -181,10 +191,25 @@ public class SlimeSoccer {
         g.setColor(Color.GRAY);
         g.fillRect(0, (int) FLOOR_Y, (int) BASE_WIDTH, (int) (BASE_HEIGHT - FLOOR_Y));
 
+        long slimeStart = System.nanoTime();
+
+
         drawSlime(g, 1, 75);
         drawSlime(g, 2, 75);
         drawSlime(g, 3, 75);
         drawSlime(g, 4, 75);
+
+        long slimeEnd = System.nanoTime();
+        slimeTotalNsInWindow += (slimeEnd - slimeStart);
+        slimeFramesInWindow++;
+
+        if (++slimeFramesInWindow == 300) {
+            double avgMs = (slimeTotalNsInWindow / 300.0) / 1_000_000.0;
+            System.out.println("Avg SLIME render time (last 300 frames): " + avgMs + " ms");
+
+            slimeFramesInWindow = 0;
+            slimeTotalNsInWindow = 0;
+        }
 
         trailBallDecorator.applyEffect(gameData.getBallEffectCode());
         drawPowerUps(g, gameData);
@@ -333,20 +358,30 @@ public class SlimeSoccer {
         ballPosY = gameData.getBallPosY();
 
         // --- draw the slime ---
-        g.setColor(color);
-        g.fillArc((int) (posX - radius), (int) (posY - radius), radius * 2, radius * 2, 0, 180);
 
-        float eyePosY = posY - 35;
-        float eyePosX = facingRight ? posX + 35 : posX - 35;
-
-        float ballDist = (float) Math.sqrt(Math.pow(ballPosX - eyePosX, 2) + Math.pow(ballPosY - eyePosY, 2));
-
-        g.setColor(Color.WHITE);
-        g.fillOval((int) (eyePosX - 15), (int) (eyePosY - 15), 30, 30);
-
-        g.setColor(Color.BLACK);
-        g.fillOval((int) (eyePosX + 6 * (ballPosX - eyePosX) / ballDist - 7),
-                (int) (eyePosY + 6 * (ballPosY - eyePosY) / ballDist - 7), 14, 14);
+        slimeSprite.draw(
+                (Graphics2D) g,
+                posX,
+                posY,
+                facingRight,
+                color,
+                ballPosX,
+                ballPosY
+        );
+//        g.setColor(color);
+//        g.fillArc((int) (posX - radius), (int) (posY - radius), radius * 2, radius * 2, 0, 180);
+//
+//        float eyePosY = posY - 35;
+//        float eyePosX = facingRight ? posX + 35 : posX - 35;
+//
+//        float ballDist = (float) Math.sqrt(Math.pow(ballPosX - eyePosX, 2) + Math.pow(ballPosY - eyePosY, 2));
+//
+//        g.setColor(Color.WHITE);
+//        g.fillOval((int) (eyePosX - 15), (int) (eyePosY - 15), 30, 30);
+//
+//        g.setColor(Color.BLACK);
+//        g.fillOval((int) (eyePosX + 6 * (ballPosX - eyePosX) / ballDist - 7),
+//                (int) (eyePosY + 6 * (ballPosY - eyePosY) / ballDist - 7), 14, 14);
     }
 
     private void drawPowerUps(Graphics2D g, GameData data) {
