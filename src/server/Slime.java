@@ -17,6 +17,7 @@ public class Slime implements GameElement {
 
     private server.model.TeamSide teamSide;
     private String nickname;
+    private int slot;
 
 
     public Slime(double x, double y, Color color, boolean isFacingRight) {
@@ -173,6 +174,14 @@ public class Slime implements GameElement {
         if (this.currentState != null) {
             this.currentState.enter(this);
         }
+    }
+
+    public int getSlot() {
+        return slot;
+    }
+
+    public void setSlot(int slot) {
+        this.slot = slot;
     }
 
     public server.state.PlayerState getState() {

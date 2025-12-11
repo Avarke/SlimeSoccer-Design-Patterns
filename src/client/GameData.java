@@ -94,11 +94,13 @@ public final class GameData {
         public final String team;   // "LEFT"/"RIGHT"
         public final String sender;
         public final String text;
+        public final String target;
 
-        public ChatEntry(String scope, String team, String sender, String text) {
+        public ChatEntry(String scope, String team, String sender, String target, String text) {
             this.scope = scope;
             this.team = team;
             this.sender = sender;
+            this.target = target;
             this.text = text;
         }
     }
@@ -412,8 +414,8 @@ public final class GameData {
 
 
 
-    public synchronized void addChatMessage(String scope, String team, String sender, String text) {
-        chatLog.add(new ChatEntry(scope, team, sender, text));
+    public synchronized void addChatMessage(String scope, String team, String sender, String target, String text) {
+        chatLog.add(new ChatEntry(scope, team, sender, target, text));
         // limit history to last 30 messages
         if (chatLog.size() > 30) {
             chatLog.remove(0);

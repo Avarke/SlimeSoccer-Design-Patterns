@@ -39,10 +39,16 @@ public class GameChatMediator implements ChatMediator {
                 : message;
 
         // 2) Route based on scope
-        if (processed.getScope() == ChatScope.GLOBAL) {
-            sendToAll(processed);
-        } else { // ChatScope.TEAM
-            sendToTeam(processed.getSenderTeam(), processed);
+        switch (processed.getScope()) {
+            case GLOBAL:
+                sendToAll(processed);
+                break;
+            case TEAM:
+                sendToTeam(processed.getSenderTeam(), processed);
+                break;
+            case PRIVATE:
+                sendToPrivate(processed.getTargetNickname(), processed);
+                break;
         }
     }
 
@@ -57,6 +63,18 @@ public class GameChatMediator implements ChatMediator {
         for (ChatParticipant p : participants) {
             if (team.equalsIgnoreCase(p.getTeam())) {
                 p.deliver(msg);
+            }
+        }
+    }
+
+    private void sendToPrivate(String targetNickname, ChatMessage msg) {
+        if (targetNickname == null || targetNickname.isEmpty()) {
+            return;
+        }
+        for (ChatParticipant p : participants) {
+            if (targetNickname.equalsIgnoreCase(p.getNickname())) {
+                p.deliver(msg);
+                break; // only one recipient
             }
         }
     }

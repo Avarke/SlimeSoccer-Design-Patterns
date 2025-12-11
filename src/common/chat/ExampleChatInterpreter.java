@@ -17,13 +17,12 @@ public class ExampleChatInterpreter implements ChatInterpreter {
         if (commandInterpreter.isCommand(text)) {
             String result = commandInterpreter.interpret(text);
             if (result != null) {
-                
                 return new ChatMessage(
                     "System",
                     "",
                     ChatScope.GLOBAL,
                     result,
-                    System.currentTimeMillis()
+                    System.currentTimeMillis(), null
                 );
             }
         }

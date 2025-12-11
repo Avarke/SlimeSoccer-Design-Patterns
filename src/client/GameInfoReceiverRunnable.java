@@ -84,7 +84,7 @@ public class GameInfoReceiverRunnable implements Runnable {
 
     private void handleChatLine(String line, GameData gameData) {
         // Format: CHAT|scope|team|sender|text
-        String[] parts = line.split("\\|", 5);
+        String[] parts = line.split("\\|", 6);
         if (parts.length < 5) {
             return; // malformed
         }
@@ -94,7 +94,11 @@ public class GameInfoReceiverRunnable implements Runnable {
         String sender = unescape(parts[3]);
         String text   = unescape(parts[4]);
 
-        gameData.addChatMessage(scope, team, sender, text);
+        String target = "";
+        if (parts.length >= 6) {
+            target = unescape(parts[5]);           // target nickname (for PRIVATE), may be ""
+        }
+        gameData.addChatMessage(scope, team, sender, target, text);
     }
 
     private String unescape(String s) {

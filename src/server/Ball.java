@@ -15,6 +15,10 @@ public class Ball implements GameElement {
 
     private double velY, velX;
 
+    private int lastTouchingSlot = 0; // 0 = no one yet
+
+
+
     // Strategy for physics
     private BallPhysicsStrategy physics = BallPhysicsStrategies.normal();
 
@@ -101,6 +105,21 @@ public class Ball implements GameElement {
         clone.setPhysicsStrategy(getPhysicsStrategy());
         return clone;
     }
+
+
+    public int getLastTouchingSlot() {
+        return lastTouchingSlot;
+    }
+
+    public void setLastTouchingSlot(int slot) {
+        this.lastTouchingSlot = slot;
+    }
+
+    // optionally, a helper:
+    public void clearLastTouchingSlot() {
+        this.lastTouchingSlot = 0;
+    }
+
 
     @Override
     public void accept(GameElementVisitor visitor) {

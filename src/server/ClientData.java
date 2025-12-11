@@ -59,7 +59,10 @@ public class ClientData implements ChatParticipant {
                 .append(message.getScope().name()).append('|')
                 .append(message.getSenderTeam()).append('|')
                 .append(escape(message.getSenderNickname())).append('|')
-                .append(escape(message.getText()));
+                .append(escape(message.getText())).append('|')
+                .append(escape(message.getTargetNickname()));
+
+
         os.println(b.toString());
     }
 

@@ -51,6 +51,8 @@ public class Maths {
         double reflectionAngle = 2*normal - collisionVelocityAngle + Math.PI;
         ball.setVelX((Math.cos(reflectionAngle)*collisionVelocity*0.5)+slime.getVelX());
         ball.setVelY((Math.sin(reflectionAngle)*collisionVelocity*0.5)+slime.getVelY());
+
+        ball.setLastTouchingSlot(slime.getSlot());
     }
 
     public static boolean circleIntersectsRect(

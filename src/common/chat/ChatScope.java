@@ -2,5 +2,6 @@ package common.chat;
 
 public enum ChatScope {
     GLOBAL,
-    TEAM
+    TEAM,
+    PRIVATE
 }

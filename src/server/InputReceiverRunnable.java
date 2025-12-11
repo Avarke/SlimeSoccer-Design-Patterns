@@ -93,7 +93,8 @@ public class InputReceiverRunnable implements Runnable {
                 clientData.getTeam(),       // sender team ("LEFT"/"RIGHT")
                 scope,
                 text,
-                System.currentTimeMillis()
+                System.currentTimeMillis(),
+                null
         );
         // SENDER → MEDIATOR (with processor & recipients behind it)
         slimeSoccer.getChatMediator().sendMessage(msg);

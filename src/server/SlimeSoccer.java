@@ -9,13 +9,11 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.swing.SwingUtilities;
 
+import server.achievements.PlayerAchievements;
 import server.builder.BallBuilder;
 import server.factory.DefaultGameFactory;
 import server.factory.DefaultGoalFactory;
@@ -72,6 +70,8 @@ public class SlimeSoccer {
     private AbstractMatchController matchController;
     private World world;
     private MatchParticipants participants;
+    private final Map<Integer, PlayerAchievements> achievementsBySlot = new HashMap<>();
+
 
     public SlimeSoccer() {
         this(GameConfiguration.builder().build());
@@ -109,6 +109,36 @@ public class SlimeSoccer {
             }
         }
     }
+
+    public void registerPlayerAchievements(int slot, ClientData client) {
+        PlayerAchievements pa = new PlayerAchievements(client, chatMediator);
+        achievementsBySlot.put(slot, pa);
+    }
+
+    public void onPlayerScored(int slot) {
+        PlayerAchievements pa = achievementsBySlot.get(slot);
+        if (pa != null) {
+            pa.onPlayerScored();
+        }
+    }
+
+    public void onPlayerJumped(int slot) {
+        PlayerAchievements pa = achievementsBySlot.get(slot);
+        if (pa != null) {
+            pa.onPlayerJumped();
+        }
+    }
+
+    private int lastBallTouchingSlot = -1;
+
+    public void setLastBallTouchingSlot(int slot) {
+        lastBallTouchingSlot = slot;
+    }
+
+    public int getLastBallTouchingSlot() {
+        return lastBallTouchingSlot;
+    }
+
 
 
     public SlimeSoccer(GameConfiguration configuration) {
@@ -175,12 +205,19 @@ public class SlimeSoccer {
     public void init() {
         matchController = new StandardMatchController();
         IGameFactory factory = DefaultGameFactory.INSTANCE;
-        player1 = factory.createSlime(Window.WIDTH / 2 - (2 * Window.WIDTH / 5), 0.814 * Window.HEIGHT, Color.GREEN,
-                true);
+        player1 = factory.createSlime(Window.WIDTH / 2 - (2 * Window.WIDTH / 5), 0.814 * Window.HEIGHT, Color.GREEN, true);
+        player1.setSlot(1);
+
         player2 = factory.createSlime(Window.WIDTH / 2 - (Window.WIDTH / 5), 0.814 * Window.HEIGHT, Color.CYAN, true);
+        player2.setSlot(2);
+
         player3 = factory.createSlime(Window.WIDTH / 2 + (Window.WIDTH / 5), 0.814 * Window.HEIGHT, Color.RED, false);
-        player4 = factory.createSlime(Window.WIDTH / 2 + (2 * Window.WIDTH / 5), 0.814 * Window.HEIGHT,
-                new Color(255, 110, 20), false);
+        player3.setSlot(3);
+
+
+        player4 = factory.createSlime(Window.WIDTH / 2 + (2 * Window.WIDTH / 5), 0.814 * Window.HEIGHT, new Color(255, 110, 20), false);
+        player4.setSlot(4);
+
         background = factory.createRectangle(0, 0, Window.WIDTH, Window.HEIGHT, Color.BLUE);
         floor = factory.createRectangle(0, 0.814 * Window.HEIGHT, Window.WIDTH, Window.HEIGHT - 0.814 * Window.HEIGHT,
                 Color.GRAY);
@@ -334,15 +371,20 @@ public class SlimeSoccer {
 
         if (Window.playerOneJump) {
             player1.jump();
+            onPlayerJumped(1);   // host or local player slot
         }
         if (Window.playerTwoJump) {
             player2.jump();
+            onPlayerJumped(2);   // host or local player slot
         }
         if (Window.playerThreeJump) {
             player3.jump();
+            onPlayerJumped(3);   // host or local player slot
         }
         if (Window.playerFourJump) {
             player4.jump();
+            onPlayerJumped(4);   // host or local player slot
+
         }
     }
 
@@ -510,6 +552,13 @@ public class SlimeSoccer {
         boolean rightGoalScored = inRightMouthY && (bx - br > rgx);
 
         if (leftGoalScored) {
+
+            int scorerSlot = ball.getLastTouchingSlot();
+            if (scorerSlot != 0) {
+                onPlayerScored(scorerSlot);
+            }
+            ball.clearLastTouchingSlot();
+
             if (gamestate == 1)
                 player2Score++;
             goalScored = true;
@@ -520,6 +569,13 @@ public class SlimeSoccer {
                 autoResetAtMs = System.currentTimeMillis() + configuration.getAutoResetDelayMs();
         }
         if (rightGoalScored) {
+
+            int scorerSlot = ball.getLastTouchingSlot();
+            if (scorerSlot != 0) {
+                onPlayerScored(scorerSlot);
+            }
+            ball.clearLastTouchingSlot();
+
             if (gamestate == 1)
                 player1Score++;
             goalScored = true;
@@ -542,6 +598,9 @@ public class SlimeSoccer {
         if (powerUps != null)
             powerUps.clearAll(ball);
         // Reset visitor statistics when game resets
+
+        ball.clearLastTouchingSlot();
+
         ReportCommand.resetStats();
     }
 

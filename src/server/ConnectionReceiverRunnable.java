@@ -72,6 +72,11 @@ public class ConnectionReceiverRunnable implements Runnable {
 
                 slimeSoccer.getChatMediator().registerParticipant(clientData);
                 slimeSoccer.clients.add(clientData);
+
+                // achievement tree creation
+                slimeSoccer.registerPlayerAchievements(playerNumber, clientData);
+
+
                 new Thread(new InputReceiverRunnable(slimeSoccer, playerNumber, socket, clientData)).start();
             } catch (IOException e) {
                 e.printStackTrace();
