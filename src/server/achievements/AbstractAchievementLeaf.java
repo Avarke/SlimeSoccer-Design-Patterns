@@ -16,6 +16,11 @@ public abstract class AbstractAchievementLeaf implements AchievementComponent {
         return unlocked;
     }
 
+    /** Exposes unlock status for iterator/reporting use-cases. */
+    public boolean unlocked() {
+        return unlocked;
+    }
+
     protected void unlock(AchievementContext ctx) {
         if (unlocked) return;
         unlocked = true;

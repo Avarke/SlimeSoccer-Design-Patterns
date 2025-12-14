@@ -8,14 +8,14 @@ import server.chat.GameChatMediator;
 
 public class PlayerAchievements {
     private final AchievementContext context;
-    private final AchievementComponent root;
+    private final AchievementComposite root;
 
     public PlayerAchievements(ClientData player, ChatMediator mediator) {
         this.context = new AchievementContext(player, mediator);
         this.root = buildTree();
     }
 
-    private AchievementComponent buildTree() {
+    private AchievementComposite buildTree() {
         AchievementComposite root = new AchievementComposite("root");
 
         // ---- Scoring chain: 1 → 5 → 10 ----
@@ -83,6 +83,21 @@ public class PlayerAchievements {
         root.addChild(movementGroup);
 
         return root;
+    }
+
+    /** Depth-first traversal (stack-backed). */
+    public Iterable<AchievementComponent> depthFirstTraversal() {
+        return root;
+    }
+
+    /** Breadth-first traversal (queue-backed). */
+    public Iterable<AchievementComponent> breadthFirstTraversal() {
+        return root.breadthFirst();
+    }
+
+    /** Unlocked leaves only (list-backed filter). */
+    public Iterable<AbstractAchievementLeaf> unlockedAchievements() {
+        return root.unlockedOnly();
     }
 
     // Called from game logic when events happen
