@@ -2,10 +2,7 @@ package server.Interpreter;
 
 import server.SlimeSoccer;
 
-/**
- * /setscore <team1> <team2>
- * Allows setting the scoreboard to arbitrary non-negative values.
- */
+
 public class SetScoreCommand implements CommandExpression {
     @Override
     public String execute(String[] args) {
@@ -18,9 +15,9 @@ public class SetScoreCommand implements CommandExpression {
             if (t1 < 0 || t2 < 0) {
                 return "Scores must be non-negative.";
             }
-            // Update core game scores
+            
             SlimeSoccer.setScores(t1, t2);
-            // Keep other reporting commands in sync
+            
             ScoreCommand.updateScores(t1, t2);
             ReportCommand.updateScores(t1, t2);
             return "Scores updated: Team1=" + t1 + " Team2=" + t2;

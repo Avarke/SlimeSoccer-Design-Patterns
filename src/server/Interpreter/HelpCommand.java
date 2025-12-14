@@ -16,7 +16,8 @@ public class HelpCommand implements CommandExpression {
                "  /setbrightness <0-100> - Adjust brightness\n" +
                "  /reset - Reset game\n" +
                "  /score - Show current score\n" +
-               "  /report - Generate game statistics report";
+               "  /report - Generate game statistics report\n" +
+               "  /setscore <team1> <team2> - Set scores";
     }
     
     @Override

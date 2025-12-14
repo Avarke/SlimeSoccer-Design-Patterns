@@ -24,17 +24,23 @@ public class PowerUpManager {
             nextSpawnAt = now + 5000 + rnd.nextInt(4000);
         }
 
-        for (int i = 0; i < items.size(); i++) {
-            PowerUp p = items.get(i);
+        // Use Iterator to safely remove while iterating (Iterator pattern)
+        java.util.Iterator<PowerUp> it = items.iterator();
+        while (it.hasNext()) {
+            PowerUp p = it.next();
+            boolean collected = false;
             for (Slime s : players) {
                 if (p.collides(s)) {
                     ball.setPhysicsStrategy(p.createStrategy());
                     currentEffect = p.getType();
                     effectEndAt = now + p.getDurationMs();
-                    items.remove(i);
-                    i--;
+                    it.remove(); // safe removal
+                    collected = true;
                     break;
                 }
+            }
+            if (collected) {
+                // continue to next power-up
             }
         }
 
@@ -52,6 +58,61 @@ public class PowerUpManager {
 
     public List<PowerUp> getVisiblePowerUps() {
         return Collections.unmodifiableList(items);
+    }
+
+    /**
+     * Returns an Iterable that iterates power-ups in reverse order.
+     * Useful when external callers want stable indices while removing.
+     */
+    public Iterable<PowerUp> reversed() {
+        return new Iterable<PowerUp>() {
+            @Override
+            public java.util.Iterator<PowerUp> iterator() {
+                return new java.util.Iterator<PowerUp>() {
+                    int idx = items.size() - 1;
+                    @Override public boolean hasNext() { return idx >= 0; }
+                    @Override public PowerUp next() { return items.get(idx--); }
+                    @Override public void remove() { throw new UnsupportedOperationException(); }
+                };
+            }
+        };
+    }
+
+    /** Simple predicate interface to avoid Java 8 dependency. */
+    public interface PowerUpPredicate { boolean test(PowerUp p); }
+
+    /** Returns an Iterable view filtered by the given predicate. */
+    public Iterable<PowerUp> filtered(final PowerUpPredicate predicate) {
+        return new Iterable<PowerUp>() {
+            @Override
+            public java.util.Iterator<PowerUp> iterator() {
+                return new java.util.Iterator<PowerUp>() {
+                    private int cursor = 0;
+                    private PowerUp next;
+                    private void advance() {
+                        next = null;
+                        while (cursor < items.size()) {
+                            PowerUp cand = items.get(cursor++);
+                            if (predicate == null || predicate.test(cand)) {
+                                next = cand;
+                                break;
+                            }
+                        }
+                    }
+                    { advance(); }
+                    @Override public boolean hasNext() { return next != null; }
+                    @Override public PowerUp next() { PowerUp r = next; advance(); return r; }
+                    @Override public void remove() { throw new UnsupportedOperationException(); }
+                };
+            }
+        };
+    }
+
+    /** Convenience: iterate only power-ups of a specific type. */
+    public Iterable<PowerUp> ofType(final PowerUpType type) {
+        return filtered(new PowerUpPredicate() {
+            @Override public boolean test(PowerUp p) { return p.getType() == type; }
+        });
     }
 
     public void clearAll(Ball ball) {

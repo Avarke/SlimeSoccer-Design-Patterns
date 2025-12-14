@@ -55,6 +55,9 @@ public class SlimeSoccer {
     static int player2Score = 0;
     private long autoResetAtMs = 0;
 
+    // Keep a reference to the active game instance for helper methods
+    private static SlimeSoccer ACTIVE_INSTANCE;
+
     // throttle server painting to reduce CPU/GPU
     private static final long PAINT_INTERVAL_NS = 16_666_667L; // ~60 FPS
     private long lastPaintNs = 0;
@@ -95,6 +98,25 @@ public class SlimeSoccer {
         Slime s = getSlimeForSlot(slot);
         if (s != null) {
             s.setNickname(slotNicknames[slot]);
+        }
+    }
+
+    /**
+     * Sets the scoreboard values (used by /setscore). Also refreshes score texts if available.
+     */
+    public static void setScores(int team1, int team2) {
+        if (team1 < 0 || team2 < 0) return; // ignore invalid
+        player1Score = team1;
+        player2Score = team2;
+        // Try to refresh text objects if an instance exists
+        SlimeSoccer instance = ACTIVE_INSTANCE;
+        if (instance != null) {
+            if (instance.team1ScoreText != null) {
+                instance.team1ScoreText.setContent(String.valueOf(team1));
+            }
+            if (instance.team2ScoreText != null) {
+                instance.team2ScoreText.setContent(String.valueOf(team2));
+            }
         }
     }
 
@@ -142,6 +164,7 @@ public class SlimeSoccer {
 
 
     public SlimeSoccer(GameConfiguration configuration) {
+        ACTIVE_INSTANCE = this;
         this.configuration = Objects.requireNonNull(configuration, "configuration");
 
         // Initialize game objects BEFORE showing the window to avoid nulls on first
@@ -406,7 +429,8 @@ public class SlimeSoccer {
             player.accept(reportVisitor);
         }
 
-        for (Slime player : participants) {
+        // 2nd iterator implimentation
+        for (Slime player : world.nearestToBall(3)) {
             Maths.bounceBallOffSlime(ball, player);
         }
 

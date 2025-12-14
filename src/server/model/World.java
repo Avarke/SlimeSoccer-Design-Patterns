@@ -63,4 +63,85 @@ public class World implements Iterable<Slime> {
             player.updateState(deltaTime);
         }
     }
+
+    /**
+      Iterable over the players ordered by ascending distance to the current ball position.   
+     */
+    public Iterable<Slime> nearestToBall(final int maxCount) {
+        if (ball == null) {
+            return this; // fallback
+        }
+        final double bx = ball.getX();
+        final double by = ball.getY();
+        return new Iterable<Slime>() {
+            @Override
+            public Iterator<Slime> iterator() {
+                // Build a sorted snapshot by distance
+                java.util.ArrayList<Slime> snapshot = new java.util.ArrayList<>(allPlayers);
+                java.util.Collections.sort(snapshot, new java.util.Comparator<Slime>() {
+                    @Override
+                    public int compare(Slime a, Slime b) {
+                        double da = dist2(a.getX(), a.getY(), bx, by);
+                        double db = dist2(b.getX(), b.getY(), bx, by);
+                        return Double.compare(da, db);
+                    }
+                });
+                if (maxCount > 0 && maxCount < snapshot.size()) {
+                    snapshot = new java.util.ArrayList<>(snapshot.subList(0, maxCount));
+                }
+                final java.util.Iterator<Slime> it = snapshot.iterator();
+                return new Iterator<Slime>() {
+                    @Override public boolean hasNext() { return it.hasNext(); }
+                    @Override public Slime next() { return it.next(); }
+                    @Override public void remove() { throw new UnsupportedOperationException(); }
+                };
+            }
+        };
+    }
+
+    /**
+      Iterable over nearest opponents to a given source player (sorted by distance).
+     */
+    public Iterable<Slime> nearestOpponentsTo(final Slime source, final int maxCount) {
+        if (source == null) return this;
+        final server.model.TeamSide side = source.getTeamSide();
+        final double sx = source.getX();
+        final double sy = source.getY();
+        return new Iterable<Slime>() {
+            @Override
+            public Iterator<Slime> iterator() {
+                java.util.ArrayList<Slime> opponents = new java.util.ArrayList<>();
+                for (Slime s : allPlayers) {
+                    if (s == source) continue;
+                    if (side == server.model.TeamSide.LEFT && s.getTeamSide() == server.model.TeamSide.RIGHT) {
+                        opponents.add(s);
+                    } else if (side == server.model.TeamSide.RIGHT && s.getTeamSide() == server.model.TeamSide.LEFT) {
+                        opponents.add(s);
+                    }
+                }
+                java.util.Collections.sort(opponents, new java.util.Comparator<Slime>() {
+                    @Override
+                    public int compare(Slime a, Slime b) {
+                        double da = dist2(a.getX(), a.getY(), sx, sy);
+                        double db = dist2(b.getX(), b.getY(), sx, sy);
+                        return Double.compare(da, db);
+                    }
+                });
+                if (maxCount > 0 && maxCount < opponents.size()) {
+                    opponents = new java.util.ArrayList<>(opponents.subList(0, maxCount));
+                }
+                final java.util.Iterator<Slime> it = opponents.iterator();
+                return new Iterator<Slime>() {
+                    @Override public boolean hasNext() { return it.hasNext(); }
+                    @Override public Slime next() { return it.next(); }
+                    @Override public void remove() { throw new UnsupportedOperationException(); }
+                };
+            }
+        };
+    }
+
+    private static double dist2(double ax, double ay, double bx, double by) {
+        double dx = ax - bx, dy = ay - by;
+        return dx*dx + dy*dy;
+    }
 }

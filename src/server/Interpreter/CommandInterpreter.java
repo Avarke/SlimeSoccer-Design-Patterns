@@ -18,6 +18,7 @@ public class CommandInterpreter {
         registerCommand(new ScoreCommand());
         registerCommand(new ResetCommand());
         registerCommand(new ReportCommand());
+        registerCommand(new SetScoreCommand());
     }
     
     public void registerCommand(CommandExpression command) {

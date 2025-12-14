@@ -25,4 +25,8 @@ public class Text {
         g.setColor(color);
         g.drawString(content, (int)x, (int)y);
     }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
 }
