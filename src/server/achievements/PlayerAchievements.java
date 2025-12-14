@@ -2,6 +2,7 @@ package server.achievements;
 
 import server.ClientData;
 import server.achievements.concreteAchievements.JumpAchievement;
+import server.achievements.concreteAchievements.MetaAchievement;
 import server.achievements.concreteAchievements.ScoreAchievement;
 import server.chat.ChatMediator;
 import server.chat.GameChatMediator;
@@ -81,6 +82,16 @@ public class PlayerAchievements {
         // root has two subtrees
         root.addChild(scoreGroup);
         root.addChild(movementGroup);
+
+        MetaAchievement meta = new MetaAchievement(
+                "meta_all",
+                "Match Master",
+                "You unlocked every achievement in this match!",
+                java.util.List.of(scoreGroup, movementGroup)
+        );
+
+        root.addChild(meta);
+
 
         return root;
     }

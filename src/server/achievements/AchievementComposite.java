@@ -23,5 +23,14 @@ public class AchievementComposite implements AchievementComponent {
             c.onEvent(type, ctx);
         }
     }
+
+    @Override
+    public boolean isUnlocked() {
+        if (children.isEmpty()) return false;
+        for (AchievementComponent c : children) {
+            if (!c.isUnlocked()) return false;
+        }
+        return true;
+    }
 }
 
