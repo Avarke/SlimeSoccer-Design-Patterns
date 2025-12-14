@@ -10,7 +10,6 @@ public final class StandardMatchController extends AbstractMatchController {
                 halfTimeResumeAt = System.currentTimeMillis() + 10_000; // 10s pause
             }
         } else {
-            // any other phase clears pause marker
             halfTimeResumeAt = 0L;
         }
     }
@@ -26,7 +25,7 @@ public final class StandardMatchController extends AbstractMatchController {
             return false;
         }
         if (halfTimeResumeAt == 0L) {
-            return true; // just entered, set in handlePhaseSpecificBehavior on next call
+            return true;
         }
         return System.currentTimeMillis() < halfTimeResumeAt;
     }

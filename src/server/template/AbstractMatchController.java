@@ -10,11 +10,9 @@ public abstract class AbstractMatchController {
     protected int halfDuration = 90000; // 90 seconds per half
 
     protected AbstractMatchController() {
-        // Initialize start time so the first half runs for the expected duration.
         this.phaseStartTime = System.currentTimeMillis();
     }
 
-    // Template method
     public final void updateMatch() {
         checkPhaseTransition();
         updatePhaseLogic();
@@ -24,12 +22,9 @@ public abstract class AbstractMatchController {
         }
     }
 
-    // Hook methods (to be implemented by subclasses)
     protected abstract void handlePhaseSpecificBehavior();
-
     protected abstract boolean shouldEndMatch();
 
-    // Common logic
     private void checkPhaseTransition() {
         long elapsed = System.currentTimeMillis() - phaseStartTime;
 
@@ -53,17 +48,12 @@ public abstract class AbstractMatchController {
     }
 
     private void updatePhaseLogic() {
-        // Common update logic for all phases
     }
 
     public String getCurrentPhase() {
         return currentPhase;
     }
 
-    /**
-     * Hook for subclasses to indicate a temporary pause (e.g., half-time break).
-     * Default: not paused.
-     */
     public boolean isPaused() {
         return false;
     }
