@@ -7,7 +7,7 @@ package server.template;
 public final class TrainingMatchController extends AbstractMatchController {
 
     public TrainingMatchController() {
-        this.halfDuration = 20_000; // 20 seconds per half
+        this.halfDuration = 15_000; // 15 seconds per half, no halftime pause
     }
 
     @Override

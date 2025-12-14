@@ -34,6 +34,12 @@ public final class GameData {
     private boolean rightIsPressed;
     private boolean leftIsPressed;
 
+    // Hotness levels (0 = normal, 1..3 = progressively “hotter” scorers)
+    private int p1Hot;
+    private int p2Hot;
+    private int p3Hot;
+    private int p4Hot;
+
     private int ballEffectCode;
     private float[] powerUpXs = new float[0];
     private float[] powerUpYs = new float[0];
@@ -403,6 +409,27 @@ public final class GameData {
         this.p4Stamina = val;
     }
 
+    // --- Hot levels (for visuals) ---
+    public synchronized void setHotLevel(int index, int level) {
+        int safe = Math.max(0, Math.min(3, level));
+        switch (index) {
+            case 0: p1Hot = safe; break;
+            case 1: p2Hot = safe; break;
+            case 2: p3Hot = safe; break;
+            case 3: p4Hot = safe; break;
+        }
+    }
+
+    public synchronized int getHotLevel(int index) {
+        switch (index) {
+            case 0: return p1Hot;
+            case 1: return p2Hot;
+            case 2: return p3Hot;
+            case 3: return p4Hot;
+            default: return 0;
+        }
+    }
+
     // --- Match Phase ---
     public synchronized String getMatchPhase() {
         return matchPhase;
@@ -559,6 +586,10 @@ public final class GameData {
             this.p2Stamina = snapshot.stamina[1];
             this.p3Stamina = snapshot.stamina[2];
             this.p4Stamina = snapshot.stamina[3];
+            this.p1Hot = snapshot.hotLevels[0];
+            this.p2Hot = snapshot.hotLevels[1];
+            this.p3Hot = snapshot.hotLevels[2];
+            this.p4Hot = snapshot.hotLevels[3];
 
             this.p1Name = snapshot.getPlayerName(0);
             this.p2Name = snapshot.getPlayerName(1);
@@ -608,6 +639,7 @@ public final class GameData {
         private final boolean foul;
         private final int ballEffectCode;
         private final float[] stamina;
+        private final int[] hotLevels;
         private final String matchPhase;
         private final float[] powerUpXs;
         private final float[] powerUpYs;
@@ -633,6 +665,7 @@ public final class GameData {
             this.foul = builder.foul;
             this.ballEffectCode = builder.ballEffectCode;
             this.stamina = Arrays.copyOf(builder.stamina, builder.stamina.length);
+            this.hotLevels = Arrays.copyOf(builder.hotLevels, builder.hotLevels.length);
             this.matchPhase = builder.matchPhase;
             this.powerUpCount = builder.powerUpCount;
             this.powerUpXs = Arrays.copyOf(builder.powerUpXs, builder.powerUpCount);
@@ -665,6 +698,7 @@ public final class GameData {
         private boolean foul;
         private int ballEffectCode;
         private final float[] stamina = new float[4];
+        private final int[] hotLevels = new int[4];
         private String matchPhase;
         private float[] powerUpXs = new float[0];
         private float[] powerUpYs = new float[0];
@@ -702,6 +736,12 @@ public final class GameData {
         public SnapshotBuilder withPlayerStamina(int index, float val) {
             checkIndex(index);
             stamina[index] = val;
+            return this;
+        }
+
+        public SnapshotBuilder withPlayerHotLevel(int index, int hot) {
+            checkIndex(index);
+            hotLevels[index] = hot;
             return this;
         }
 

@@ -12,6 +12,9 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Stroke;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -374,17 +377,27 @@ public class SlimeSoccer {
         ballPosX = gameData.getBallPosX();
         ballPosY = gameData.getBallPosY();
 
-        // --- draw the slime ---
+        int hotLevel = gameData.getHotLevel(playerIndex - 1);
+        Color drawColor = applyHotTint(color, hotLevel);
+
+        // --- draw the slime with hot aura/outline if needed ---
+        if (g instanceof Graphics2D) {
+            drawHotAura((Graphics2D) g, posX, posY, hotLevel, radius);
+        }
 
         slimeSprite.draw(
                 (Graphics2D) g,
                 posX,
                 posY,
                 facingRight,
-                color,
+                drawColor,
                 ballPosX,
                 ballPosY
         );
+
+        if (g instanceof Graphics2D) {
+            drawHotOutline((Graphics2D) g, posX, posY, hotLevel, radius);
+        }
 //        g.setColor(color);
 //        g.fillArc((int) (posX - radius), (int) (posY - radius), radius * 2, radius * 2, 0, 180);
 //
@@ -410,6 +423,42 @@ public class SlimeSoccer {
             g.setColor(color);
             g.fillOval((int) (snapshot.xs[i] - radius), (int) (snapshot.ys[i] - radius), diameter, diameter);
         }
+    }
+
+    private Color applyHotTint(Color base, int hotLevel) {
+        if (hotLevel <= 0) return base;
+        // Subtle warm tint per level
+        float mix = Math.min(0.35f, 0.12f * hotLevel);
+        int r = (int) (base.getRed() * (1 - mix) + 255 * mix);
+        int g = (int) (base.getGreen() * (1 - mix) + 180 * mix);
+        int b = (int) (base.getBlue() * (1 - mix) + 80 * mix);
+        return new Color(clamp(r), clamp(g), clamp(b), base.getAlpha());
+    }
+
+    private int clamp(int v) {
+        return Math.max(0, Math.min(255, v));
+    }
+
+    private void drawHotAura(Graphics2D g, float x, float y, int hotLevel, int radius) {
+        if (hotLevel <= 0) return;
+        float alpha = 0.06f * hotLevel; // softer
+        int auraRadius = (int) (radius * (1.2 + 0.2 * hotLevel)); // smaller halo
+        Color auraColor = new Color(255, 150, 50, (int) (alpha * 255));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.setColor(auraColor);
+        g.fillOval((int) (x - auraRadius), (int) (y - auraRadius), auraRadius * 2, auraRadius * 2);
+        g.setComposite(AlphaComposite.SrcOver);
+    }
+
+    private void drawHotOutline(Graphics2D g, float x, float y, int hotLevel, int radius) {
+        if (hotLevel <= 0) return;
+        int thickness = 1 + hotLevel; // thinner
+        int outlineR = (int) (radius * 1.02); // tighter to body
+        Stroke old = g.getStroke();
+        g.setStroke(new BasicStroke(thickness));
+        g.setColor(new Color(255, 200, 120, 170));
+        g.drawArc((int) (x - outlineR), (int) (y - outlineR), outlineR * 2, outlineR * 2, 0, 180);
+        g.setStroke(old);
     }
 
     private void drawAbilityHud(Graphics2D g, GameData data) {

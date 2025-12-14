@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import javax.swing.SwingUtilities;
+import javax.swing.JOptionPane;
 
 import server.achievements.PlayerAchievements;
 import server.builder.BallBuilder;
@@ -23,6 +24,7 @@ import server.model.MatchParticipants;
 import server.strategy.BallPhysicsStrategies;
 import server.template.AbstractMatchController;
 import server.template.StandardMatchController;
+import server.template.TrainingMatchController;
 
 
 import server.chat.ChatMediator;
@@ -54,6 +56,9 @@ public class SlimeSoccer {
     static int player1Score = 0;
     static int player2Score = 0;
     private long autoResetAtMs = 0;
+    // Hot player tracking
+    private final int[] slotGoals = new int[5];
+    private final double[] slotSpeedBoost = new double[5];
 
     // Keep a reference to the active game instance for helper methods
     private static SlimeSoccer ACTIVE_INSTANCE;
@@ -70,6 +75,7 @@ public class SlimeSoccer {
     // Power-ups
     PowerUpManager powerUps;
     private final GameConfiguration configuration;
+    private final boolean trainingMode;
     private AbstractMatchController matchController;
     private World world;
     private MatchParticipants participants;
@@ -142,6 +148,9 @@ public class SlimeSoccer {
         if (pa != null) {
             pa.onPlayerScored();
         }
+        if (slot >= 1 && slot < slotGoals.length) {
+            slotGoals[slot]++;
+        }
     }
 
     public void onPlayerJumped(int slot) {
@@ -149,6 +158,52 @@ public class SlimeSoccer {
         if (pa != null) {
             pa.onPlayerJumped();
         }
+    }
+
+    private Iterable<Slime> hotPlayersByGoals() {
+        return new Iterable<Slime>() {
+            @Override
+            public Iterator<Slime> iterator() {
+                ArrayList<Slime> list = new ArrayList<>();
+                for (int slot = 1; slot <= 4; slot++) {
+                    Slime s = getSlimeForSlot(slot);
+                    if (s != null) list.add(s);
+                }
+                list.sort(new Comparator<Slime>() {
+                    @Override
+                    public int compare(Slime a, Slime b) {
+                        int ga = (a != null) ? slotGoals[a.getSlot()] : 0;
+                        int gb = (b != null) ? slotGoals[b.getSlot()] : 0;
+                        return Integer.compare(gb, ga); // descending
+                    }
+                });
+                return list.iterator();
+            }
+        };
+    }
+
+    private void recomputeHotPlayerBoosts() {
+        Arrays.fill(slotSpeedBoost, 1.0);
+        double[] boosts = new double[] {1.10, 1.05, 1.02};
+        int idx = 0;
+        for (Slime s : hotPlayersByGoals()) {
+            if (s == null) continue;
+            int goals = slotGoals[s.getSlot()];
+            if (goals <= 0 || idx >= boosts.length) {
+                // stop assigning boosts when no goals or we ran out of slots
+                continue;
+            }
+            slotSpeedBoost[s.getSlot()] = boosts[idx];
+            idx++;
+        }
+    }
+
+    private int getHotLevelForSlot(int slot) {
+        double boost = (slot >= 0 && slot < slotSpeedBoost.length) ? slotSpeedBoost[slot] : 1.0;
+        if (boost >= 1.09) return 3;
+        if (boost >= 1.04) return 2;
+        if (boost > 1.0) return 1;
+        return 0;
     }
 
     private int lastBallTouchingSlot = -1;
@@ -166,6 +221,8 @@ public class SlimeSoccer {
     public SlimeSoccer(GameConfiguration configuration) {
         ACTIVE_INSTANCE = this;
         this.configuration = Objects.requireNonNull(configuration, "configuration");
+        this.trainingMode = configuration.isTrainingMatch();
+        Arrays.fill(slotSpeedBoost, 1.0);
 
         // Initialize game objects BEFORE showing the window to avoid nulls on first
         // paint
@@ -226,7 +283,9 @@ public class SlimeSoccer {
     }
 
     public void init() {
-        matchController = new StandardMatchController();
+        matchController = configuration.isTrainingMatch()
+                ? new TrainingMatchController()
+                : new StandardMatchController();
         IGameFactory factory = DefaultGameFactory.INSTANCE;
         player1 = factory.createSlime(Window.WIDTH / 2 - (2 * Window.WIDTH / 5), 0.814 * Window.HEIGHT, Color.GREEN, true);
         player1.setSlot(1);
@@ -412,6 +471,9 @@ public class SlimeSoccer {
     }
 
     public void tick() {
+        if (matchController != null && matchController.isPaused()) {
+            return; // freeze gameplay during half-time pause
+        }
         // Delta time for physics (16ms ~= 0.016 seconds per frame at 60 FPS)
         double deltaTime = 0.016;
 
@@ -421,9 +483,13 @@ public class SlimeSoccer {
         // Update player states (stamina management) using iterator
         world.updateAll(deltaTime);
 
-        // Update player positions and eyes via merged iterator
+        // Recompute speed boosts for hot players (iterator over sorted scorers)
+        recomputeHotPlayerBoosts();
+
+        // Update player positions and eyes via merged iterator, applying hot-player boost
         for (Slime player : participants) {
-            player.setX(player.getX() + player.getVelX());
+            double boost = slotSpeedBoost[player.getSlot()];
+            player.setX(player.getX() + player.getVelX() * boost);
             player.updateEyes();
             // Track player activity with visitor
             player.accept(reportVisitor);
@@ -436,7 +502,7 @@ public class SlimeSoccer {
 
         controls();
 
-        if (powerUps != null) {
+        if (!trainingMode && powerUps != null) {
             powerUps.update(ball, player1, player2, player3, player4);
             // Track power-up usage
             for (PowerUp powerUp : powerUps.getVisiblePowerUps()) {
@@ -634,13 +700,13 @@ public class SlimeSoccer {
 
         GameStateJson.PlayerState[] players = new GameStateJson.PlayerState[] {
                 new GameStateJson.PlayerState(player1.getX(), player1.getY(), player1.isFacingRight(),
-                        player1.getColor().getRGB(), player1.getStamina(), player1.getNickname()),
+                        player1.getColor().getRGB(), player1.getStamina(), getHotLevelForSlot(1), player1.getNickname()),
                 new GameStateJson.PlayerState(player2.getX(), player2.getY(), player2.isFacingRight(),
-                        player2.getColor().getRGB(), player2.getStamina(), player2.getNickname()),
+                        player2.getColor().getRGB(), player2.getStamina(), getHotLevelForSlot(2), player2.getNickname()),
                 new GameStateJson.PlayerState(player3.getX(), player3.getY(), player3.isFacingRight(),
-                        player3.getColor().getRGB(), player3.getStamina(), player3.getNickname()),
+                        player3.getColor().getRGB(), player3.getStamina(), getHotLevelForSlot(3), player3.getNickname()),
                 new GameStateJson.PlayerState(player4.getX(), player4.getY(), player4.isFacingRight(),
-                        player4.getColor().getRGB(), player4.getStamina(),player4.getNickname())
+                        player4.getColor().getRGB(), player4.getStamina(), getHotLevelForSlot(4), player4.getNickname())
         };
 
         List<GameStateJson.PowerUpState> powerStates = new ArrayList<>(visiblePowerUps.size());
@@ -674,7 +740,39 @@ public class SlimeSoccer {
     }
 
     public static void main(String[] args) {
-        new SlimeSoccer();
+        boolean training = parseTrainingFlag(args);
+        if (!training) {
+            training = promptTrainingMode();
+        }
+
+        GameConfiguration config = GameConfiguration.builder()
+                .withTrainingMatch(training)
+                .build();
+        new SlimeSoccer(config);
+    }
+
+    private static boolean parseTrainingFlag(String[] args) {
+        if (args == null) return false;
+        for (String a : args) {
+            if ("--training".equalsIgnoreCase(a) || "-t".equalsIgnoreCase(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean promptTrainingMode() {
+        String[] options = { "Standard match", "Training match" };
+        int choice = JOptionPane.showOptionDialog(
+                null,
+                "Pasirinkite režimą (Template Method):",
+                "Slime Soccer serveris",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+        return choice == 1; // Training if second option picked
     }
 
     public GameConfiguration getConfiguration() {

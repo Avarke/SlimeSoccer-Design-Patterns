@@ -29,6 +29,7 @@ public final class GameStateJson {
                     .append(p.facingRight).append(',')
                     .append(p.color).append(',')
                     .append(trimDouble(p.stamina)).append(',')
+                    .append(p.hotLevel).append(',')
                     .append('"').append(escapeString(p.nickname)).append('"')
                     .append(']');
         }
@@ -115,15 +116,16 @@ public final class GameStateJson {
                 break;
             String body = segment.substring(start + 1, end);
             String[] parts = body.split(",");
-            if (parts.length >= 6) {
+            if (parts.length >= 7) {
                 double x = Double.parseDouble(parts[0]);
                 double y = Double.parseDouble(parts[1]);
                 boolean facing = Boolean.parseBoolean(parts[2]);
                 int color = Integer.parseInt(parts[3]);
                 double stamina = Double.parseDouble(parts[4]);
-                String rawName = parts[5].trim(); // e.g. "\"Nick\""
+                int hot = Integer.parseInt(parts[5]);
+                String rawName = parts[6].trim(); // e.g. "\"Nick\""
                 String nickname = unquoteAndUnescape(rawName);
-                result.add(new PlayerState(x, y, facing, color, stamina, nickname));
+                result.add(new PlayerState(x, y, facing, color, stamina, hot, nickname));
             }
             idx = end + 1;
         }
@@ -294,14 +296,16 @@ public final class GameStateJson {
         public final boolean facingRight;
         public final int color;
         public final double stamina;
+        public final int hotLevel;
         public final String nickname;
 
-        public PlayerState(double x, double y, boolean facingRight, int color, double stamina, String nickname) {
+        public PlayerState(double x, double y, boolean facingRight, int color, double stamina, int hotLevel, String nickname) {
             this.x = x;
             this.y = y;
             this.facingRight = facingRight;
             this.color = color;
             this.stamina = stamina;
+            this.hotLevel = hotLevel;
             this.nickname = nickname;
         }
     }

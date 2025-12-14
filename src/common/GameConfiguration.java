@@ -7,11 +7,13 @@ public final class GameConfiguration {
     private final String host;
     private final int port;
     private final long autoResetDelayMs;
+    private final boolean trainingMatch;
 
     private GameConfiguration(Builder builder) {
         this.host = builder.host;
         this.port = builder.port;
         this.autoResetDelayMs = builder.autoResetDelayMs;
+        this.trainingMatch = builder.trainingMatch;
     }
 
     public static Builder builder() {
@@ -30,10 +32,15 @@ public final class GameConfiguration {
         return autoResetDelayMs;
     }
 
+    public boolean isTrainingMatch() {
+        return trainingMatch;
+    }
+
     public static final class Builder {
         private String host = "localhost";
         private int port = 6969;
         private long autoResetDelayMs = 2500;
+        private boolean trainingMatch = false;
 
         public Builder withHost(String host) {
             if (host != null && !host.trim().isEmpty()) {
@@ -53,6 +60,11 @@ public final class GameConfiguration {
             if (delayMs > 0) {
                 this.autoResetDelayMs = delayMs;
             }
+            return this;
+        }
+
+        public Builder withTrainingMatch(boolean trainingMatch) {
+            this.trainingMatch = trainingMatch;
             return this;
         }
 

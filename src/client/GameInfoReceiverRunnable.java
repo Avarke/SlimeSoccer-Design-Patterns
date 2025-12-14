@@ -58,6 +58,7 @@ public class GameInfoReceiverRunnable implements Runnable {
                     builder.withPlayerPosition(i, (float) p.x, (float) p.y, p.facingRight);
                     builder.withPlayerColor(i, new Color(p.color, true));
                     builder.withPlayerStamina(i, (float) p.stamina);
+                    builder.withPlayerHotLevel(i, p.hotLevel);
                     builder.withPlayerName(i, p.nickname);          // NEW LINE
                 }
 

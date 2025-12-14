@@ -59,4 +59,12 @@ public abstract class AbstractMatchController {
     public String getCurrentPhase() {
         return currentPhase;
     }
+
+    /**
+     * Hook for subclasses to indicate a temporary pause (e.g., half-time break).
+     * Default: not paused.
+     */
+    public boolean isPaused() {
+        return false;
+    }
 }
