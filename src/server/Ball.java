@@ -22,16 +22,16 @@ public class Ball {
         this.radius = radius;
         this.color = color;
 
-        lowBound = 0.814*Window.HEIGHT;
+        lowBound = 0.814 * Window.HEIGHT;
         rightBound = Window.WIDTH;
-        leftCBarX = 0.093*Window.WIDTH;
+        leftCBarX = 0.093 * Window.WIDTH;
         rightCBarX = Window.WIDTH - leftCBarX;
-        cBarY = 0.648*Window.HEIGHT;
+        cBarY = 0.648 * Window.HEIGHT;
     }
 
     public void draw(Graphics g) {
         g.setColor(color);
-        g.fillOval((int) (x - radius), (int) (y - radius), (int) (radius*2), (int) (radius*2));
+        g.fillOval((int) (x - radius), (int) (y - radius), (int) (radius * 2), (int) (radius * 2));
     }
 
     public void boundaries() {
@@ -60,8 +60,8 @@ public class Ball {
     }
 
     public void crossBarCheck() {
-        if(y < cBarY + 10 && y > cBarY - 10) {
-            if(x < leftCBarX || x > rightCBarX) {
+        if (y < cBarY + 10 && y > cBarY - 10) {
+            if (x < leftCBarX || x > rightCBarX) {
                 velY = -velY;
             }
         }
@@ -75,22 +75,57 @@ public class Ball {
         this.physics = BallPhysicsStrategies.normal(); // normalize physics on new round
     }
 
-    public BallPhysicsStrategy getPhysicsStrategy() { return physics; }
+    public BallPhysicsStrategy getPhysicsStrategy() {
+        return physics;
+    }
+
     public void setPhysicsStrategy(BallPhysicsStrategy physics) {
         this.physics = (physics != null) ? physics : BallPhysicsStrategies.normal();
     }
 
-    public double getX() { return x; }
-    public void setX(double x) { this.x = x; }
-    public double getY() { return y; }
-    public void setY(double y) { this.y = y; }
-    public double getRadius() { return radius; }
-    public void setRadius(int radius) { this.radius = radius; }
-    public double getVelX() { return velX; }
-    public void setVelX(double velX) { this.velX = velX; }
-    public double getVelY() { return velY; }
-    public void setVelY(double velY) { this.velY = velY; }
-    public Color getColor() { return color; }
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public double getRadius() {
+        return radius;
+    }
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
+
+    public double getVelX() {
+        return velX;
+    }
+
+    public void setVelX(double velX) {
+        this.velX = velX;
+    }
+
+    public double getVelY() {
+        return velY;
+    }
+
+    public void setVelY(double velY) {
+        this.velY = velY;
+    }
+
+    public Color getColor() {
+        return color;
+    }
 
     public Ball copyWithPosition(double newX, double newY) {
         Ball clone = new Ball(newX, newY, radius, color);
@@ -98,6 +133,32 @@ public class Ball {
         clone.setVelY(velY);
         clone.setPhysicsStrategy(getPhysicsStrategy());
         return clone;
+    }
+
+    public BallMemento save() {
+        return new BallMementoImpl(x, y, velX, velY);
+    }
+
+    public void restore(BallMemento memento) {
+        if (!(memento instanceof BallMementoImpl)) {
+            throw new IllegalArgumentException("Unknown memento class");
+        }
+        BallMementoImpl impl = (BallMementoImpl) memento;
+        this.x = impl.x;
+        this.y = impl.y;
+        this.velX = impl.velX;
+        this.velY = impl.velY;
+    }
+
+    private static class BallMementoImpl implements BallMemento {
+        private final double x, y, velX, velY;
+
+        private BallMementoImpl(double x, double y, double velX, double velY) {
+            this.x = x;
+            this.y = y;
+            this.velX = velX;
+            this.velY = velY;
+        }
     }
 
 }

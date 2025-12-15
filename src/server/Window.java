@@ -13,7 +13,8 @@ public class Window extends JFrame {
     private static final long serialVersionUID = 3685355721496314265L;
     SlimeSoccer slimesoccer;
     Panel panel;
-    static boolean playerOneRight, playerOneLeft, playerTwoRight, playerTwoLeft, playerThreeLeft, playerThreeRight, playerFourLeft, playerFourRight, playerOneJump, playerTwoJump, playerThreeJump, playerFourJump, reset;
+    static boolean playerOneRight, playerOneLeft, playerTwoRight, playerTwoLeft, playerThreeLeft, playerThreeRight,
+            playerFourLeft, playerFourRight, playerOneJump, playerTwoJump, playerThreeJump, playerFourJump, reset;
 
     Window(SlimeSoccer temp) {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -27,97 +28,104 @@ public class Window extends JFrame {
         panel.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if(e.getKeyChar() == 'D' || e.getKeyChar() == 'd') {
+                if (e.getKeyChar() == 'D' || e.getKeyChar() == 'd') {
                     playerOneRight = true;
                 }
-                if(e.getKeyChar() == 'A' || e.getKeyChar() == 'a') {
+                if (e.getKeyChar() == 'A' || e.getKeyChar() == 'a') {
                     playerOneLeft = true;
                 }
 
-                if(e.getKeyChar() == 'J' || e.getKeyChar() == 'j') {
+                if (e.getKeyChar() == 'J' || e.getKeyChar() == 'j') {
                     playerTwoRight = true;
                 }
-                if(e.getKeyChar() == 'G' || e.getKeyChar() == 'g') {
+                if (e.getKeyChar() == 'G' || e.getKeyChar() == 'g') {
                     playerTwoLeft = true;
                 }
 
-                if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
                     playerThreeRight = true;
                 }
-                if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+                if (e.getKeyCode() == KeyEvent.VK_LEFT) {
                     playerThreeLeft = true;
                 }
 
-                if(e.getKeyChar() == '#') {
+                if (e.getKeyChar() == '#') {
                     playerFourRight = true;
                 }
-                if(e.getKeyChar() == ';') {
+                if (e.getKeyChar() == ';') {
                     playerFourLeft = true;
                 }
 
-                if(e.getKeyChar() == 'W' || e.getKeyChar() == 'w') {
+                if (e.getKeyChar() == 'W' || e.getKeyChar() == 'w') {
                     playerOneJump = true;
                 }
-                if(e.getKeyChar() == 'Y' || e.getKeyChar() == 'y') {
+                if (e.getKeyChar() == 'Y' || e.getKeyChar() == 'y') {
                     playerTwoJump = true;
                 }
-                if(e.getKeyCode() == KeyEvent.VK_UP) {
+                if (e.getKeyCode() == KeyEvent.VK_UP) {
                     playerThreeJump = true;
                 }
-                if(e.getKeyCode() == '[') {
+                if (e.getKeyCode() == '[') {
                     playerFourJump = true;
                 }
-                if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     reset = true;
+                }
+                if (e.getKeyChar() == '=') {
+                    saveBall = true;
+                }
+                if (e.getKeyChar() == '_' || e.getKeyChar() == '-') {
+                    restoreBall = true;
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                if(e.getKeyChar() == 'D' || e.getKeyChar() == 'd') {
+                if (e.getKeyChar() == 'D' || e.getKeyChar() == 'd') {
                     playerOneRight = false;
                 }
-                if(e.getKeyChar() == 'A' || e.getKeyChar() == 'a') {
+                if (e.getKeyChar() == 'A' || e.getKeyChar() == 'a') {
                     playerOneLeft = false;
                 }
 
-                if(e.getKeyChar() == 'J' || e.getKeyChar() == 'j') {
+                if (e.getKeyChar() == 'J' || e.getKeyChar() == 'j') {
                     playerTwoRight = false;
                 }
-                if(e.getKeyChar() == 'G' || e.getKeyChar() == 'g') {
+                if (e.getKeyChar() == 'G' || e.getKeyChar() == 'g') {
                     playerTwoLeft = false;
                 }
 
-                if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
                     playerThreeRight = false;
                 }
-                if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+                if (e.getKeyCode() == KeyEvent.VK_LEFT) {
                     playerThreeLeft = false;
                 }
 
-                if(e.getKeyChar() == '#') {
+                if (e.getKeyChar() == '#') {
                     playerFourRight = false;
                 }
-                if(e.getKeyChar() == ';') {
+                if (e.getKeyChar() == ';') {
                     playerFourLeft = false;
                 }
 
-                if(e.getKeyChar() == 'W' || e.getKeyChar() == 'w') {
+                if (e.getKeyChar() == 'W' || e.getKeyChar() == 'w') {
                     playerOneJump = false;
                 }
-                if(e.getKeyChar() == 'Y' || e.getKeyChar() == 'y') {
+                if (e.getKeyChar() == 'Y' || e.getKeyChar() == 'y') {
                     playerTwoJump = false;
                 }
-                if(e.getKeyCode() == KeyEvent.VK_UP) {
+                if (e.getKeyCode() == KeyEvent.VK_UP) {
                     playerThreeJump = false;
                 }
-                if(e.getKeyCode() == '[') {
+                if (e.getKeyCode() == '[') {
                     playerFourJump = false;
                 }
             }
 
             @Override
-            public void keyTyped(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {
+            }
         });
         setUndecorated(true);
         setVisible(true);
