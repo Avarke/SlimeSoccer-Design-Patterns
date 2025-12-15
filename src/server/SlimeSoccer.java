@@ -86,6 +86,7 @@ public class SlimeSoccer {
         clients = new ArrayList<ClientData>();
         new Thread(new ConnectionReceiverRunnable(this, configuration.getPort())).start();
 
+        System.out.println("SYSTEM: Server fully started. Entering game loop...");
         while (true) {
             if (runGame) {
                 long nowNs = System.nanoTime();
