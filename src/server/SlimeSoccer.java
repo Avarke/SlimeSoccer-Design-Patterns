@@ -58,6 +58,7 @@ public class SlimeSoccer {
     private long autoResetAtMs = 0;
     // Hot player tracking
     private final int[] slotGoals = new int[5];
+    private final int[] slotHotRank = new int[5];
     private final double[] slotSpeedBoost = new double[5];
 
     // Keep a reference to the active game instance for helper methods
@@ -182,27 +183,75 @@ public class SlimeSoccer {
         };
     }
 
+    /** PriorityQueue-backed iterable (goals desc, stamina tiebreak). */
+    private Iterable<Slime> hotPlayersPriority() {
+        return new Iterable<Slime>() {
+            @Override
+            public Iterator<Slime> iterator() {
+                java.util.PriorityQueue<Slime> pq = new java.util.PriorityQueue<>(
+                        new java.util.Comparator<Slime>() {
+                            @Override
+                            public int compare(Slime a, Slime b) {
+                                int ga = (a != null) ? slotGoals[a.getSlot()] : 0;
+                                int gb = (b != null) ? slotGoals[b.getSlot()] : 0;
+                                if (ga != gb) return Integer.compare(gb, ga);
+                                double sa = (a != null) ? a.getStamina() : 0;
+                                double sb = (b != null) ? b.getStamina() : 0;
+                                return Double.compare(sb, sa); // higher stamina first
+                            }
+                        });
+                for (int slot = 1; slot <= 4; slot++) {
+                    Slime s = getSlimeForSlot(slot);
+                    if (s != null) pq.add(s);
+                }
+                return pq.iterator();
+            }
+        };
+    }
+
+    /** First available player (stable fallback when no goals yet). */
+    private Slime firstAvailablePlayer() {
+        for (int slot = 1; slot <= 4; slot++) {
+            Slime s = getSlimeForSlot(slot);
+            if (s != null) return s;
+        }
+        return null;
+    }
+
     private void recomputeHotPlayerBoosts() {
         Arrays.fill(slotSpeedBoost, 1.0);
+        Arrays.fill(slotHotRank, 0);
+
+        // Rank players by goals using ArrayList + sort (iterator #1)
+        int rank = 0;
+        for (Slime s : hotPlayersByGoals()) {
+            if (s == null) continue;
+            slotHotRank[s.getSlot()] = ++rank;
+        }
+
+        // Assign boosts using PriorityQueue order (iterator #2)
         double[] boosts = new double[] {1.10, 1.05, 1.02};
         int idx = 0;
-        for (Slime s : hotPlayersByGoals()) {
+        for (Slime s : hotPlayersPriority()) {
             if (s == null) continue;
             int goals = slotGoals[s.getSlot()];
             if (goals <= 0 || idx >= boosts.length) {
-                // stop assigning boosts when no goals or we ran out of slots
                 continue;
             }
             slotSpeedBoost[s.getSlot()] = boosts[idx];
             idx++;
         }
+
+        // If no one has scored yet, leave boosts neutral (no visual highlight)
     }
 
     private int getHotLevelForSlot(int slot) {
-        double boost = (slot >= 0 && slot < slotSpeedBoost.length) ? slotSpeedBoost[slot] : 1.0;
-        if (boost >= 1.09) return 3;
-        if (boost >= 1.04) return 2;
-        if (boost > 1.0) return 1;
+        if (slot < 0 || slot >= slotHotRank.length) return 0;
+        int rank = slotHotRank[slot];
+        int goals = slotGoals[slot];
+        if (rank == 1 && goals > 0) return 3;
+        if (rank == 2 && goals > 0) return 2;
+        if (rank == 3 && goals > 0) return 1;
         return 0;
     }
 

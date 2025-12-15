@@ -380,7 +380,7 @@ public class SlimeSoccer {
         int hotLevel = gameData.getHotLevel(playerIndex - 1);
         Color drawColor = applyHotTint(color, hotLevel);
 
-        // --- draw the slime with hot aura/outline if needed ---
+        // --- draw the slime with hot aura/outline/badge if needed ---
         if (g instanceof Graphics2D) {
             drawHotAura((Graphics2D) g, posX, posY, hotLevel, radius);
         }
@@ -397,6 +397,7 @@ public class SlimeSoccer {
 
         if (g instanceof Graphics2D) {
             drawHotOutline((Graphics2D) g, posX, posY, hotLevel, radius);
+            drawHotBadge((Graphics2D) g, posX, posY, hotLevel, radius);
         }
 //        g.setColor(color);
 //        g.fillArc((int) (posX - radius), (int) (posY - radius), radius * 2, radius * 2, 0, 180);
@@ -427,11 +428,11 @@ public class SlimeSoccer {
 
     private Color applyHotTint(Color base, int hotLevel) {
         if (hotLevel <= 0) return base;
-        // Subtle warm tint per level
-        float mix = Math.min(0.35f, 0.12f * hotLevel);
+        // Visible warm tint per level
+        float mix = Math.min(0.4f, 0.18f * hotLevel);
         int r = (int) (base.getRed() * (1 - mix) + 255 * mix);
-        int g = (int) (base.getGreen() * (1 - mix) + 180 * mix);
-        int b = (int) (base.getBlue() * (1 - mix) + 80 * mix);
+        int g = (int) (base.getGreen() * (1 - mix) + 190 * mix);
+        int b = (int) (base.getBlue() * (1 - mix) + 90 * mix);
         return new Color(clamp(r), clamp(g), clamp(b), base.getAlpha());
     }
 
@@ -441,9 +442,9 @@ public class SlimeSoccer {
 
     private void drawHotAura(Graphics2D g, float x, float y, int hotLevel, int radius) {
         if (hotLevel <= 0) return;
-        float alpha = 0.06f * hotLevel; // softer
-        int auraRadius = (int) (radius * (1.2 + 0.2 * hotLevel)); // smaller halo
-        Color auraColor = new Color(255, 150, 50, (int) (alpha * 255));
+        float alpha = 0.08f * hotLevel; // brighter but still soft
+        int auraRadius = (int) (radius * (1.25 + 0.08 * hotLevel)); // moderate halo
+        Color auraColor = new Color(255, 180, 90, (int) (alpha * 255));
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         g.setColor(auraColor);
         g.fillOval((int) (x - auraRadius), (int) (y - auraRadius), auraRadius * 2, auraRadius * 2);
@@ -452,13 +453,32 @@ public class SlimeSoccer {
 
     private void drawHotOutline(Graphics2D g, float x, float y, int hotLevel, int radius) {
         if (hotLevel <= 0) return;
-        int thickness = 1 + hotLevel; // thinner
-        int outlineR = (int) (radius * 1.02); // tighter to body
+        int thickness = 1 + hotLevel; // thin but visible
+        int outlineR = (int) (radius * 1.04); // close to body
         Stroke old = g.getStroke();
         g.setStroke(new BasicStroke(thickness));
-        g.setColor(new Color(255, 200, 120, 170));
+        g.setColor(new Color(255, 200, 120, 190));
         g.drawArc((int) (x - outlineR), (int) (y - outlineR), outlineR * 2, outlineR * 2, 0, 180);
         g.setStroke(old);
+    }
+
+    private void drawHotBadge(Graphics2D g, float x, float y, int hotLevel, int radius) {
+        if (hotLevel <= 0) return;
+        int badgeRadius = 10;
+        int badgeX = (int) x;
+        int badgeY = (int) (y - radius - 24);
+        Color badgeColor = switch (hotLevel) {
+            case 3 -> new Color(255, 120, 40);
+            case 2 -> new Color(255, 160, 60);
+            default -> new Color(255, 200, 90);
+        };
+        g.setColor(new Color(badgeColor.getRed(), badgeColor.getGreen(), badgeColor.getBlue(), 220));
+        g.fillOval(badgeX - badgeRadius, badgeY - badgeRadius, badgeRadius * 2, badgeRadius * 2);
+        g.setColor(Color.BLACK);
+        g.setStroke(new BasicStroke(2));
+        g.drawOval(badgeX - badgeRadius, badgeY - badgeRadius, badgeRadius * 2, badgeRadius * 2);
+        g.setFont(goalFont.deriveFont(Font.BOLD, 13f));
+        g.drawString("HOT", badgeX - 14, badgeY + 5);
     }
 
     private void drawAbilityHud(Graphics2D g, GameData data) {
