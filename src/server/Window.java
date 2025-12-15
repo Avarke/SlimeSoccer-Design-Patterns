@@ -14,7 +14,8 @@ public class Window extends JFrame {
     SlimeSoccer slimesoccer;
     Panel panel;
     static boolean playerOneRight, playerOneLeft, playerTwoRight, playerTwoLeft, playerThreeLeft, playerThreeRight,
-            playerFourLeft, playerFourRight, playerOneJump, playerTwoJump, playerThreeJump, playerFourJump, reset;
+            playerFourLeft, playerFourRight, playerOneJump, playerTwoJump, playerThreeJump, playerFourJump, reset,
+            saveBall, restoreBall;
 
     Window(SlimeSoccer temp) {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
