@@ -2,6 +2,7 @@ package server.factory;
 
 import java.awt.Color;
 
+import server.IPowerUpManager;
 import server.PowerUpManager;
 import server.Text;
 
@@ -11,7 +12,8 @@ public final class DefaultGameFactory extends AbstractGameFactory {
 
     private static final String DEFAULT_FONT = "Franklin Gothic Medium Italic";
 
-    private DefaultGameFactory() { }
+    private DefaultGameFactory() {
+    }
 
     @Override
     public Text createText(String content, double x, double y, int fontSize, Color color, String fontName) {
@@ -20,8 +22,8 @@ public final class DefaultGameFactory extends AbstractGameFactory {
     }
 
     @Override
-    public PowerUpManager createPowerUpManager() {
-        PowerUpManager manager = super.createPowerUpManager();
+    public IPowerUpManager createPowerUpManager() {
+        IPowerUpManager manager = new server.PowerUpManagerProxy();
         return manager;
     }
 }

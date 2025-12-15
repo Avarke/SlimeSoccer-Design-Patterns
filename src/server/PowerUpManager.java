@@ -8,7 +8,7 @@ import java.util.Random;
 
 import server.strategy.BallPhysicsStrategies;
 
-public class PowerUpManager {
+public class PowerUpManager implements IPowerUpManager {
     private final List<PowerUp> items = new ArrayList<>();
     private final Random rnd = new Random();
 

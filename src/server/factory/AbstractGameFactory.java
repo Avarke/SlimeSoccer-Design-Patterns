@@ -6,6 +6,7 @@ import java.awt.Color;
  * Provides shared construction logic for families of game objects.
  */
 import server.Goal;
+import server.IPowerUpManager;
 import server.PowerUpManager;
 import server.Rectangle;
 import server.Slime;
@@ -25,7 +26,7 @@ public abstract class AbstractGameFactory implements IGameFactory {
 
     @Override
     public Slime createSlime(double x, double y, Color color, boolean isLeft) {
-        
+
         return createSlimeFactory().createSlime(x, y, color, isLeft);
     }
 
@@ -46,7 +47,7 @@ public abstract class AbstractGameFactory implements IGameFactory {
     }
 
     @Override
-    public PowerUpManager createPowerUpManager() {
+    public IPowerUpManager createPowerUpManager() {
         return new PowerUpManager();
     }
 }
